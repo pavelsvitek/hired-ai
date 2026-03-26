@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-import { CandidatesQueryProvider } from "@/components/candidates-query-provider";
 import { EmbedPDFPersistentProvider } from "@/components/embed-pdf/EmbedPDFViewerCustom";
 
 /**
@@ -11,10 +10,8 @@ import { EmbedPDFPersistentProvider } from "@/components/embed-pdf/EmbedPDFViewe
  */
 export default function CandidatesLayout({ children }: { children: ReactNode }) {
   return (
-    <CandidatesQueryProvider>
-      <EmbedPDFPersistentProvider>
-        <NuqsAdapter>{children}</NuqsAdapter>
-      </EmbedPDFPersistentProvider>
-    </CandidatesQueryProvider>
+    <EmbedPDFPersistentProvider>
+      <NuqsAdapter>{children}</NuqsAdapter>
+    </EmbedPDFPersistentProvider>
   );
 }

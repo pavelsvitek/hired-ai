@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Roboto_Mono } from "next/font/google";
 import { AgentationDev } from "@/components/agentation-dev";
+import { CandidatesQueryProvider } from "@/components/candidates-query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -33,8 +34,10 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <TooltipProvider>
-            {children}
-            <AgentationDev />
+            <CandidatesQueryProvider>
+              {children}
+              <AgentationDev />
+            </CandidatesQueryProvider>
           </TooltipProvider>
         </ThemeProvider>
       </body>
