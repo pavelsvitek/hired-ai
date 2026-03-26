@@ -1,7 +1,7 @@
 "use client"
 
-import * as React from "react"
 import { useTheme } from "next-themes"
+import * as React from "react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
@@ -17,17 +17,14 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import {
-  TerminalSquareIcon,
-  BotIcon,
-  BookOpenIcon,
-  Settings2Icon,
-  LifeBuoyIcon,
-  SendIcon,
-  TerminalIcon,
   LayoutDashboardIcon,
-  UsersIcon,
+  LifeBuoyIcon,
   MoonIcon,
+  SendIcon,
+  Settings2Icon,
   SunIcon,
+  TerminalIcon,
+  UsersIcon
 } from "lucide-react"
 
 function SidebarThemeToggle() {
@@ -84,77 +81,6 @@ const data = {
       url: "/dashboard",
       icon: <LayoutDashboardIcon />,
       isActive: false,
-    },
-    {
-      title: "Playground",
-      url: "#",
-      icon: (
-        <TerminalSquareIcon
-        />
-      ),
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: (
-        <BotIcon
-        />
-      ),
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: (
-        <BookOpenIcon
-        />
-      ),
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
     },
     {
       title: "Settings",
