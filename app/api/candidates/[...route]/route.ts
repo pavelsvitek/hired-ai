@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import { zValidator } from "@hono/zod-validator";
 import { and, desc, eq } from "drizzle-orm";
-import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { z } from "zod";
 
@@ -13,8 +12,7 @@ import {
 } from "@/lib/cv-extraction/map-to-candidate-row";
 import { readCvPdfFile, storeCvPdf } from "@/lib/cv-storage";
 import { db } from "@/lib/db";
-import type { AuthVariables } from "@/lib/hono/require-auth";
-import { requireAuth } from "@/lib/hono/require-auth";
+import { createHonoWithAuth } from "@/lib/hono/create-hono-with-auth";
 
 export const runtime = "nodejs";
 
@@ -31,9 +29,7 @@ function errorMessage(err: unknown): string {
   return "Unexpected error";
 }
 
-const app = new Hono<{ Variables: AuthVariables }>().basePath("/api/candidates");
-
-app.use("/*", requireAuth);
+const app = createHonoWithAuth("/api/candidates");
 
 app.get("/", async (c) => {
   const userId = c.var.userId;
