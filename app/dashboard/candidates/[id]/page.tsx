@@ -112,7 +112,11 @@ export default async function CandidateDetailPage({
           <p className="sr-only" id="pdf-preview-label">
             Candidate CV preview
           </p>
-          <CandidateCvViewer cvUrl={cvUrl} mimeType={row.cvMimeType} />
+          <CandidateCvViewer
+            cvUrl={cvUrl}
+            mimeType={row.cvMimeType}
+            pdfDocumentId={`${candidateId}:${row.cvStorageKey}`}
+          />
         </div>
         <aside
           className="flex max-h-none min-w-0 flex-[0.35] flex-col overflow-y-auto border-t border-border lg:max-h-[calc(100dvh-4.5rem)] lg:border-l lg:border-t-0 lg:pl-6"

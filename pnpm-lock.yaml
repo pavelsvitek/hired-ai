@@ -11,6 +11,42 @@ importers:
       '@ai-sdk/google':
         specifier: ^3.0.53
         version: 3.0.53(zod@4.3.6)
+      '@embedpdf/core':
+        specifier: ^2.10.1
+        version: 2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
+      '@embedpdf/engines':
+        specifier: ^2.10.1
+        version: 2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
+      '@embedpdf/models':
+        specifier: ^2.10.1
+        version: 2.10.1
+      '@embedpdf/plugin-document-manager':
+        specifier: ^2.10.1
+        version: 2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
+      '@embedpdf/plugin-interaction-manager':
+        specifier: ^2.10.1
+        version: 2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
+      '@embedpdf/plugin-pan':
+        specifier: ^2.10.1
+        version: 2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(@embedpdf/plugin-interaction-manager@2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(@embedpdf/plugin-viewport@2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
+      '@embedpdf/plugin-render':
+        specifier: ^2.10.1
+        version: 2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
+      '@embedpdf/plugin-scroll':
+        specifier: ^2.10.1
+        version: 2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(@embedpdf/plugin-viewport@2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
+      '@embedpdf/plugin-search':
+        specifier: ^2.10.1
+        version: 2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
+      '@embedpdf/plugin-selection':
+        specifier: ^2.10.1
+        version: 2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(@embedpdf/plugin-interaction-manager@2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
+      '@embedpdf/plugin-viewport':
+        specifier: ^2.10.1
+        version: 2.10.1(@embedpdf/core@2.10.1(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3)))(preact@10.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
+      '@embedpdf/plugin-zoom':
+        specifier: ^2.10.1
+        version: 2.10.1(e5c1f6edca6da609e100ac793c9ec02f)
       '@embedpdf/snippet':
         specifier: ^2.10.1
         version: 2.10.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.55.0)(vue@3.5.31(typescript@5.9.3))
@@ -32,6 +68,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.1
         version: 0.45.1(@opentelemetry/api@1.9.1)(@prisma/client@5.22.0)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(kysely@0.28.14)(pg@8.20.0)
+      framer-motion:
+        specifier: ^12.38.0
+        version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       lucide-react:
         specifier: ^1.7.0
         version: 1.7.0(react@19.2.4)
@@ -3810,6 +3849,20 @@ packages:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
     engines: {node: '>= 0.6'}
 
+  framer-motion@12.38.0:
+    resolution: {integrity: sha512-rFYkY/pigbcswl1XQSb7q424kSTQ8q6eAC+YUsSKooHQYuLdzdHjrt6uxUC+PRAO++q5IS7+TamgIw1AphxR+g==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   fresh@2.0.0:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
     engines: {node: '>= 0.8'}
@@ -4450,6 +4503,12 @@ packages:
 
   mkdirp-classic@0.5.3:
     resolution: {integrity: sha512-gKLcREMhtuZRwRAfqP3RFW+TK4JqApVBtOIftVgjuABpAtpxhPGaDcfvbhNvD0B8iD1oUr/txX35NjcaY6Ns/A==}
+
+  motion-dom@12.38.0:
+    resolution: {integrity: sha512-pdkHLD8QYRp8VfiNLb8xIBJis1byQ9gPT3Jnh2jqfFtAsWUA3dEepDlsWe/xMpO8McV+VdpKVcp+E+TGJEtOoA==}
+
+  motion-utils@12.36.0:
+    resolution: {integrity: sha512-eHWisygbiwVvf6PZ1vhaHCLamvkSbPIeAYxWUuL3a2PD/TROgE7FvfHWTIH4vMl798QLfMw15nRqIaRDXTlYRg==}
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
@@ -9178,6 +9237,15 @@ snapshots:
 
   forwarded@0.2.0: {}
 
+  framer-motion@12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      motion-dom: 12.38.0
+      motion-utils: 12.36.0
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
   fresh@2.0.0: {}
 
   fs-constants@1.0.0: {}
@@ -9724,6 +9792,12 @@ snapshots:
   minimist@1.2.8: {}
 
   mkdirp-classic@0.5.3: {}
+
+  motion-dom@12.38.0:
+    dependencies:
+      motion-utils: 12.36.0
+
+  motion-utils@12.36.0: {}
 
   ms@2.1.3: {}
 
