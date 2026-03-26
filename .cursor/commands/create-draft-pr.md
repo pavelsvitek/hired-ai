@@ -11,8 +11,8 @@ Push to remote and create a draft pull request.
 ## Steps
 
 1. Run `git status` to see current state
-2. Run `git diff dev...HEAD` to understand what changed compared to `dev`
-3. Run `git log dev..HEAD` to see the commits to be included
+2. Run `git diff main...HEAD` to understand what changed compared to `main`
+3. Run `git log main..HEAD` to see the commits to be included
 4. Push branch to remote with `-u` flag (do NOT commit any new changes)
 5. Create draft PR using `gh pr create --draft`
 

@@ -28,7 +28,9 @@ export default async function Home() {
   if (session) {
     return (
       <SidebarProvider>
-        <AppSidebar />
+        <AppSidebar
+          organizationId={organizations[0]?.id ?? null}
+        />
         <SidebarInset className="bg-zinc-50 font-sans dark:bg-zinc-950">
           <header className="flex h-16 shrink-0 items-center justify-between gap-2 bg-white/80 px-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
             <div className="flex items-center gap-2">
