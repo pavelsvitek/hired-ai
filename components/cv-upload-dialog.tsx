@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { FileDropzone } from "@/components/ui/file-dropzone"
-import { FileTextIcon } from "lucide-react"
+} from "@/components/ui/dialog";
+import { FileDropzone } from "@/components/ui/file-dropzone";
+import { useUploadCandidateMutation } from "@/models/candidate/mutations";
+import { FileTextIcon } from "lucide-react";
 
 export type CvUploadDialogProps = {
   /** Active organization for upload + DB row (required unless onUpload handles storage). */
@@ -36,9 +37,11 @@ export function CvUploadDialog({
   onUpload,
   onSuccess,
 }: CvUploadDialogProps) {
+  const uploadMutation = useUploadCandidateMutation(organizationId);
+
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(
     defaultOpen ?? false,
-  )
+  );
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : uncontrolledOpen
 
@@ -48,83 +51,57 @@ export function CvUploadDialog({
       onOpenChange?.(next)
     },
     [isControlled, onOpenChange],
-  )
+  );
 
-  const [file, setFile] = React.useState<File | null>(null)
-  const [rejectMessage, setRejectMessage] = React.useState<string | null>(null)
-  const [submitError, setSubmitError] = React.useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [file, setFile] = React.useState<File | null>(null);
+  const [rejectMessage, setRejectMessage] = React.useState<string | null>(null);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [customUploadBusy, setCustomUploadBusy] = React.useState(false);
 
   const canUpload =
-    Boolean(organizationId) || Boolean(onUpload)
+    Boolean(organizationId) || Boolean(onUpload);
+
+  const isSubmitting = onUpload ? customUploadBusy : uploadMutation.isPending;
 
   React.useEffect(() => {
     if (!open) {
       setFile(null)
       setRejectMessage(null)
       setSubmitError(null)
-      setIsSubmitting(false)
+      setCustomUploadBusy(false);
     }
-  }, [open])
+  }, [open]);
 
   const handleSubmit = async () => {
-    if (!file) return
-    setSubmitError(null)
+    if (!file) return;
+    setSubmitError(null);
 
     if (onUpload) {
-      setIsSubmitting(true)
+      setCustomUploadBusy(true);
       try {
-        await onUpload(file)
-        setOpen(false)
+        await onUpload(file);
+        setOpen(false);
       } finally {
-        setIsSubmitting(false)
+        setCustomUploadBusy(false);
       }
-      return
+      return;
     }
 
     if (!organizationId) {
-      setSubmitError("No organization selected.")
-      return
+      setSubmitError("No organization selected.");
+      return;
     }
 
-    setIsSubmitting(true)
     try {
-      const body = new FormData()
-      body.set("file", file)
-      body.set("organizationId", organizationId)
-      const res = await fetch("/api/candidates/upload", {
-        method: "POST",
-        body,
-        credentials: "include",
-      })
-      const data: unknown = await res.json().catch(() => ({}))
-      const message =
-        typeof data === "object" &&
-        data !== null &&
-        "error" in data &&
-        typeof (data as { error: unknown }).error === "string"
-          ? (data as { error: string }).error
-          : null
-
-      if (!res.ok) {
-        setSubmitError(message ?? `Upload failed (${res.status})`)
-        return
-      }
-
-      const candidateId =
-        typeof data === "object" &&
-        data !== null &&
-        "candidateId" in data &&
-        typeof (data as { candidateId: unknown }).candidateId === "string"
-          ? (data as { candidateId: string }).candidateId
-          : null
-
-      if (candidateId) onSuccess?.(candidateId)
-      setOpen(false)
-    } finally {
-      setIsSubmitting(false)
+      const { candidateId } = await uploadMutation.mutateAsync({ file });
+      onSuccess?.(candidateId);
+      setOpen(false);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : `Upload failed`,
+      );
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

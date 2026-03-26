@@ -8,9 +8,8 @@ import {
   RefreshCwIcon,
   UploadCloudIcon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
-import { Activity, useEffect, useMemo, useRef, useState } from "react";
+import { Activity, useEffect, useMemo, useRef } from "react";
 
 import { CandidateCvViewer } from "@/components/candidate-cv-viewer";
 import { CandidateProfilePanel } from "@/components/candidate-profile-panel";
@@ -31,16 +30,18 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import type { CandidateRowSelect } from "@/db/schema";
+import { useReparseCandidateMutation } from "@/models/candidate/mutations";
+import { useCandidatesList } from "@/models/candidate/queries";
+import type { CandidateRow } from "@/models/candidate/types";
 import { cn } from "@/lib/utils";
 
 export type CandidatesPageClientProps = {
   organizationId: string | null;
-  rows: CandidateRowSelect[];
+  rows: CandidateRow[];
   origin: string;
 };
 
-function listTitle(r: CandidateRowSelect) {
+function listTitle(r: CandidateRow) {
   return (
     r.fullName?.trim() ||
     r.email?.trim() ||
@@ -57,10 +58,10 @@ function CandidateDetailBody({
   onReparse,
 }: {
   origin: string;
-  detailPayload: { candidateId: string; row: CandidateRowSelect };
+  detailPayload: { candidateId: string; row: CandidateRow };
   reparseBusy: boolean;
   reparseError: string | null;
-  onReparse: () => void | Promise<void>;
+  onReparse: () => void;
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 pb-4 pl-0 pr-4 pt-0 lg:flex-row">
@@ -126,10 +127,22 @@ function CandidateDetailBody({
 
 export function CandidatesPageClient({
   organizationId,
-  rows,
+  rows: initialRows,
   origin,
 }: CandidatesPageClientProps) {
-  const router = useRouter();
+  const listQuery = useCandidatesList(organizationId, {
+    initialData: initialRows,
+  });
+  const rows = useMemo(
+    () =>
+      organizationId != null && organizationId.length > 0
+        ? (listQuery.data ?? initialRows)
+        : [],
+    [organizationId, listQuery.data, initialRows],
+  );
+
+  const reparseMutation = useReparseCandidateMutation(organizationId);
+
   const [candidateId, setCandidateId] = useQueryState(
     "candidate",
     parseAsString,
@@ -142,13 +155,16 @@ export function CandidatesPageClient({
 
   const detailOpen = !!(candidateId && selectedRow);
 
+  /* Keep last detail while the list/detail Activity toggles so hidden content (e.g. PDF) stays mounted. */
   const lastDetailRef = useRef<{
     candidateId: string;
-    row: CandidateRowSelect;
+    row: CandidateRow;
   } | null>(null);
   if (candidateId && selectedRow) {
+    // eslint-disable-next-line react-hooks/refs -- intentional ref-as-instance-var for Activity keep-alive
     lastDetailRef.current = { candidateId, row: selectedRow };
   }
+  // eslint-disable-next-line react-hooks/refs -- read paired with write above for stale detail when panel closes
   const detailPayload = lastDetailRef.current;
 
   useEffect(() => {
@@ -169,15 +185,12 @@ export function CandidatesPageClient({
 
   const afterUpload = (id: string) => {
     void setCandidateId(id);
-    router.refresh();
   };
 
-  const [reparseBusy, setReparseBusy] = useState(false);
-  const [reparseError, setReparseError] = useState<string | null>(null);
-
+  const resetReparse = reparseMutation.reset;
   useEffect(() => {
-    setReparseError(null);
-  }, [candidateId]);
+    resetReparse();
+  }, [candidateId, resetReparse]);
 
   const emptyState = (
     <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed bg-muted/30 p-8">
@@ -259,38 +272,19 @@ export function CandidatesPageClient({
             <CandidateDetailBody
               origin={origin}
               detailPayload={detailPayload}
-              reparseBusy={reparseBusy}
-              reparseError={reparseError}
-              onReparse={async () => {
-                setReparseError(null);
-                setReparseBusy(true);
-                try {
-                  const res = await fetch(
-                    `/api/candidates/${detailPayload.candidateId}/reparse`,
-                    { method: "POST" },
-                  );
-                  let message = "Could not parse CV";
-                  try {
-                    const data: unknown = await res.json();
-                    if (
-                      typeof data === "object" &&
-                      data !== null &&
-                      "error" in data &&
-                      typeof (data as { error: unknown }).error === "string"
-                    ) {
-                      message = (data as { error: string }).error;
-                    }
-                  } catch {
-                    /* use default message */
-                  }
-                  if (!res.ok) {
-                    setReparseError(message);
-                    return;
-                  }
-                  router.refresh();
-                } finally {
-                  setReparseBusy(false);
-                }
+              reparseBusy={reparseMutation.isPending}
+              reparseError={
+                reparseMutation.error instanceof Error
+                  ? reparseMutation.error.message
+                  : reparseMutation.error
+                    ? "Could not parse CV"
+                    : null
+              }
+              onReparse={() => {
+                reparseMutation.reset();
+                reparseMutation.mutate({
+                  candidateId: detailPayload.candidateId,
+                });
               }}
             />
           ) : null}
