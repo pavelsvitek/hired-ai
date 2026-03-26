@@ -11,7 +11,7 @@ Rules:
 - date_of_birth: use precision "unknown" when missing; otherwise match how precise the CV is.
 - profile_summary: If the CV has an explicit Summary/Profile section, copy or lightly clean it and set source "explicit". If not, write 2-4 neutral sentences summarizing roles and technical focus from work history only; set source "generated".
 - work_history: Order newest first. If dates are ranges like 01.2020–03.2022, normalize to ISO-like YYYY-MM where possible.
-- technical_focus: Choose from the allowed enum values only; include all that clearly apply.
+- technical_focus: Identifies the candidate's professional domain(s) — not just engineering. Choose from the allowed enum values only; include all that clearly apply based on the candidate's actual work. For software engineers use engineering values (frontend, backend, devops, etc.). For marketers use marketing values (performance_marketing, growth_marketing, seo_sem, social_media_marketing, crm_email_marketing, brand_marketing, content_marketing, product_marketing, marketing_analytics, marketing_strategy). For other roles use the matching domain values (sales, business_development, product_management, design_ux, hr_recruiting, finance_accounting, operations, customer_success, project_management, consulting). Do NOT apply engineering tags to non-engineering profiles.
 - warnings: Add entries for missing critical fields, ambiguous permits, conflicting dates, or unreadable sections.`;
 
 const USER_INSTRUCTION = `Extract all fields according to the schema from the attached PDF CV.`;

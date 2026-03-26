@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const technicalFocusEnum = z.enum([
+  // Engineering
   "frontend",
   "backend",
   "full_stack",
@@ -9,6 +10,28 @@ const technicalFocusEnum = z.enum([
   "data_engineering",
   "mobile",
   "security",
+  // Marketing
+  "performance_marketing",
+  "brand_marketing",
+  "content_marketing",
+  "growth_marketing",
+  "product_marketing",
+  "seo_sem",
+  "social_media_marketing",
+  "crm_email_marketing",
+  "marketing_analytics",
+  "marketing_strategy",
+  // Other domains
+  "sales",
+  "business_development",
+  "product_management",
+  "design_ux",
+  "hr_recruiting",
+  "finance_accounting",
+  "operations",
+  "customer_success",
+  "project_management",
+  "consulting",
   "other",
 ]);
 
@@ -96,7 +119,7 @@ export const cvExtractionSchema = z.object({
   technical_focus: z
     .array(technicalFocusEnum)
     .describe(
-      "One or more lanes: frontend, backend, full_stack, devops, ml_ai_research, etc.",
+      "Professional domain(s) the candidate specialises in. Use engineering values (frontend, backend, etc.) for software roles; marketing values (performance_marketing, seo_sem, etc.) for marketing roles; other domain values for sales, HR, finance, etc. Never force engineering tags onto non-engineering profiles.",
     ),
   education: z.array(educationEntrySchema),
   skills: z.array(z.string()),
