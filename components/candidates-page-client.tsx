@@ -13,6 +13,7 @@ import { Activity, useEffect, useMemo, useRef } from "react";
 
 import { CandidateCvViewer } from "@/components/candidate-cv-viewer";
 import { CandidateProfilePanel } from "@/components/candidate-profile-panel";
+import { CandidateStageControl } from "@/components/candidate-stage-control";
 import { CvUploadDialog } from "@/components/cv-upload-dialog";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -32,16 +33,16 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useReparseCandidateMutation } from "@/models/candidate/mutations";
 import { useCandidatesList } from "@/models/candidate/queries";
-import type { CandidateRow } from "@/models/candidate/types";
+import type { CandidateListRow } from "@/models/candidate/types";
 import { cn } from "@/lib/utils";
 
 export type CandidatesPageClientProps = {
   organizationId: string | null;
-  rows: CandidateRow[];
+  rows: CandidateListRow[];
   origin: string;
 };
 
-function listTitle(r: CandidateRow) {
+function listTitle(r: CandidateListRow) {
   return (
     r.fullName?.trim() ||
     r.email?.trim() ||
@@ -51,14 +52,16 @@ function listTitle(r: CandidateRow) {
 }
 
 function CandidateDetailBody({
+  organizationId,
   origin,
   detailPayload,
   reparseBusy,
   reparseError,
   onReparse,
 }: {
+  organizationId: string | null;
   origin: string;
-  detailPayload: { candidateId: string; row: CandidateRow };
+  detailPayload: { candidateId: string; row: CandidateListRow };
   reparseBusy: boolean;
   reparseError: string | null;
   onReparse: () => void;
@@ -118,6 +121,11 @@ function CandidateDetailBody({
           {reparseError ? (
             <p className="text-sm text-destructive">{reparseError}</p>
           ) : null}
+          <CandidateStageControl
+            organizationId={organizationId}
+            candidateId={detailPayload.candidateId}
+            recruitment={detailPayload.row.recruitment}
+          />
         </div>
         <CandidateProfilePanel row={detailPayload.row} />
       </aside>
@@ -158,14 +166,17 @@ export function CandidatesPageClient({
   /* Keep last detail while the list/detail Activity toggles so hidden content (e.g. PDF) stays mounted. */
   const lastDetailRef = useRef<{
     candidateId: string;
-    row: CandidateRow;
+    row: CandidateListRow;
   } | null>(null);
   if (candidateId && selectedRow) {
     // eslint-disable-next-line react-hooks/refs -- intentional ref-as-instance-var for Activity keep-alive
     lastDetailRef.current = { candidateId, row: selectedRow };
   }
-  // eslint-disable-next-line react-hooks/refs -- read paired with write above for stale detail when panel closes
-  const detailPayload = lastDetailRef.current;
+  /** Prefer live list row when open so pipeline updates after refetch; ref retains last row when panel closes. */
+  const detailPayload =
+    candidateId && selectedRow
+      ? { candidateId, row: selectedRow }
+      : lastDetailRef.current;
 
   useEffect(() => {
     if (candidateId && !selectedRow) {
@@ -226,6 +237,9 @@ export function CandidatesPageClient({
               ) : null}
             </div>
             <div className="flex flex-col items-start gap-2 md:items-end">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {r.recruitment.stage.name}
+              </span>
               <p className="text-xs text-muted-foreground">
                 Extracted{" "}
                 {r.extractedAt
@@ -270,6 +284,7 @@ export function CandidatesPageClient({
         <Activity mode={detailOpen ? "visible" : "hidden"} name="candidate-detail">
           {detailPayload ? (
             <CandidateDetailBody
+              organizationId={organizationId}
               origin={origin}
               detailPayload={detailPayload}
               reparseBusy={reparseMutation.isPending}

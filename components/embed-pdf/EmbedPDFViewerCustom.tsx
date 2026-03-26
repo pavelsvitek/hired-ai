@@ -601,6 +601,7 @@ function AutoZoomBridge({
   enabled: boolean;
 }) {
   const { provides: zoomProvides } = useZoom(documentId);
+  const { provides: scrollCap } = useScrollCapability();
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
   const zoomProvidesRef = useRef(zoomProvides);
@@ -617,19 +618,31 @@ function AutoZoomBridge({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
-  // Apply zoom once when zoomProvides first becomes available (null → non-null).
-  // Reads enabled from a ref so it doesn't retrigger on every enabled change.
-  const zoomAvailable = !!zoomProvides;
+  // FitWidth must run after the first scroll layout exists; requesting zoom as
+  // soon as `useZoom` exposes capabilities often runs too early (wrong default).
   useEffect(() => {
-    console.log('useEffect', zoomAvailable);
-    if (!zoomAvailable) {
+    if (!scrollCap) {
       return;
     }
-    zoomProvidesRef.current?.requestZoom(
-      enabledRef.current ? ZoomMode.FitWidth : ZoomMode.Automatic
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoomAvailable]);
+    return scrollCap.onLayoutReady((event) => {
+      if (event.documentId !== documentId || !event.isInitial) {
+        return;
+      }
+      if (!enabledRef.current) {
+        return;
+      }
+      const z = zoomProvidesRef.current;
+      if (!z) {
+        return;
+      }
+      z.requestZoom(ZoomMode.FitWidth);
+      requestAnimationFrame(() => {
+        if (enabledRef.current) {
+          zoomProvidesRef.current?.requestZoom(ZoomMode.FitWidth);
+        }
+      });
+    });
+  }, [scrollCap, documentId]);
 
   useDevicePixelRatioChange((newDpr, prevDpr) => {
     if (!enabledRef.current) {

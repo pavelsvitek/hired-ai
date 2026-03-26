@@ -1,10 +1,16 @@
 import { randomUUID } from "crypto";
 import { zValidator } from "@hono/zod-validator";
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { handle } from "hono/vercel";
 import { z } from "zod";
 
-import { candidate, member, type CandidateRowSelect } from "@/db/schema";
+import {
+  candidate,
+  candidateApplication,
+  job,
+  member,
+  pipelineStage,
+} from "@/db/schema";
 import { extractCvFromPdf } from "@/lib/cv-extraction/extract";
 import {
   mapExtractionToCandidateInsert,
@@ -13,6 +19,9 @@ import {
 import { readCvPdfFile, storeCvPdf } from "@/lib/cv-storage";
 import { db } from "@/lib/db";
 import { createHonoWithAuth } from "@/lib/hono/create-hono-with-auth";
+import { ensureDefaultApplicationForCandidate } from "@/lib/recruiting/ensure-defaults";
+import { loadCandidatesForDashboard } from "@/lib/recruiting/load-candidates-dashboard";
+import type { CandidatesListResponse } from "@/models/candidate/types";
 
 export const runtime = "nodejs";
 
@@ -42,16 +51,12 @@ app.get("/", async (c) => {
   const organizationId = memberships[0]?.organizationId ?? null;
 
   if (!organizationId) {
-    return c.json({ candidates: [] satisfies CandidateRowSelect[] });
+    return c.json({ candidates: [] satisfies CandidatesListResponse["candidates"] });
   }
 
-  const rows = await db
-    .select()
-    .from(candidate)
-    .where(eq(candidate.organizationId, organizationId))
-    .orderBy(desc(candidate.updatedAt));
+  const candidates = await loadCandidatesForDashboard(organizationId);
 
-  return c.json({ candidates: rows });
+  return c.json({ candidates } satisfies CandidatesListResponse);
 });
 
 app.post("/upload", async (c) => {
@@ -139,6 +144,7 @@ app.post("/upload", async (c) => {
 
   try {
     await db.insert(candidate).values(row);
+    await ensureDefaultApplicationForCandidate(id, organizationId);
   } catch (err) {
     return c.json(
       { error: `Could not save candidate: ${errorMessage(err)}` },
@@ -148,6 +154,104 @@ app.post("/upload", async (c) => {
 
   return c.json({ candidateId: id });
 });
+
+const stagePatchSchema = z.object({
+  pipelineStageId: z.string().uuid(),
+});
+
+app.patch(
+  "/:id/application/stage",
+  zValidator("param", idParam),
+  zValidator("json", stagePatchSchema),
+  async (c) => {
+    const userId = c.var.userId;
+    const candidateId = c.req.valid("param").id;
+    const { pipelineStageId } = c.req.valid("json");
+
+    const [cand] = await db
+      .select({
+        organizationId: candidate.organizationId,
+      })
+      .from(candidate)
+      .where(eq(candidate.id, candidateId))
+      .limit(1);
+
+    if (!cand) {
+      return c.json({ error: "Candidate not found" }, 404);
+    }
+
+    const [membership] = await db
+      .select({ id: member.id })
+      .from(member)
+      .where(
+        and(
+          eq(member.userId, userId),
+          eq(member.organizationId, cand.organizationId),
+        ),
+      )
+      .limit(1);
+
+    if (!membership) {
+      return c.json({ error: "Candidate not found" }, 404);
+    }
+
+    const [jobRow] = await db
+      .select({
+        id: job.id,
+        pipelineId: job.pipelineId,
+      })
+      .from(job)
+      .where(
+        and(
+          eq(job.organizationId, cand.organizationId),
+          eq(job.isDefault, true),
+        ),
+      )
+      .limit(1);
+
+    if (!jobRow) {
+      return c.json({ error: "No default job for organization" }, 409);
+    }
+
+    const [stageRow] = await db
+      .select({ id: pipelineStage.id })
+      .from(pipelineStage)
+      .where(
+        and(
+          eq(pipelineStage.id, pipelineStageId),
+          eq(pipelineStage.pipelineId, jobRow.pipelineId),
+        ),
+      )
+      .limit(1);
+
+    if (!stageRow) {
+      return c.json(
+        { error: "Stage is not part of this job's pipeline" },
+        400,
+      );
+    }
+
+    const [updated] = await db
+      .update(candidateApplication)
+      .set({
+        pipelineStageId,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(candidateApplication.candidateId, candidateId),
+          eq(candidateApplication.jobId, jobRow.id),
+        ),
+      )
+      .returning({ id: candidateApplication.id });
+
+    if (!updated) {
+      return c.json({ error: "Application not found" }, 404);
+    }
+
+    return c.json({ ok: true as const });
+  },
+);
 
 app.get("/:id/cv", zValidator("param", idParam), async (c) => {
   const userId = c.var.userId;
@@ -276,3 +380,4 @@ app.post("/:id/reparse", zValidator("param", idParam), async (c) => {
 
 export const GET = handle(app);
 export const POST = handle(app);
+export const PATCH = handle(app);

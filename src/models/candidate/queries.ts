@@ -2,7 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import type { CandidateRow, CandidatesListResponse } from "@/models/candidate/types";
+import type {
+  CandidateListRow,
+  CandidatesListResponse,
+} from "@/models/candidate/types";
 
 export const candidateKeys = {
   all: ["candidates"] as const,
@@ -10,8 +13,11 @@ export const candidateKeys = {
     [...candidateKeys.all, "list", organizationId] as const,
 };
 
-async function fetchCandidatesList(): Promise<CandidateRow[]> {
-  const res = await fetch("/api/candidates", { credentials: "include" });
+async function fetchCandidatesList(): Promise<CandidateListRow[]> {
+  const res = await fetch("/api/candidates", {
+    credentials: "include",
+    cache: "no-store",
+  });
   if (!res.ok) {
     throw new Error(`Failed to load candidates (${res.status})`);
   }
@@ -28,7 +34,7 @@ async function fetchCandidatesList(): Promise<CandidateRow[]> {
 }
 
 export type UseCandidatesListOptions = {
-  initialData?: CandidateRow[];
+  initialData?: CandidateListRow[];
 };
 
 export function useCandidatesList(
@@ -45,5 +51,7 @@ export function useCandidatesList(
       organizationId != null && organizationId.length > 0
         ? initialData
         : undefined,
+    /** SSR payload is not the source of truth after mutations; always refetch when invalidated. */
+    initialDataUpdatedAt: 0,
   });
 }

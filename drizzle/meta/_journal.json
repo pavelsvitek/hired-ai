@@ -15,6 +15,13 @@
       "when": 1774560764457,
       "tag": "0001_sad_jetstream",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774567452469,
+      "tag": "0002_illegal_radioactive_man",
+      "breakpoints": true
     }
   ]
 }
