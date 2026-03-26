@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createDelay } from "@/lib/time";
 import { candidateKeys } from "@/models/candidate/queries";
 import type {
+  CandidateListRow,
   CandidateReparseResponse,
   CandidateUploadResponse,
 } from "@/models/candidate/types";
@@ -127,28 +128,69 @@ async function patchCandidateStage(
 
 const UPDATE_CANDIDATE_STAGE_MIN_DURATION_MS = 500;
 
+type UpdateStageVars = {
+  candidateId: string;
+  pipelineStageId: string;
+};
+
+type UpdateStageCtx = { previous: CandidateListRow[] | undefined };
+
 export function useUpdateCandidateStageMutation(
   organizationId: string | null,
 ) {
   const queryClient = useQueryClient();
+  const listKey = candidateKeys.list(organizationId);
 
-  return useMutation({
-    mutationFn: async ({
-      candidateId,
-      pipelineStageId,
-    }: {
-      candidateId: string;
-      pipelineStageId: string;
-    }) => {
+  return useMutation<{ ok: true }, Error, UpdateStageVars, UpdateStageCtx>({
+    mutationFn: async ({ candidateId, pipelineStageId }) => {
       const [, result] = await Promise.all([
         createDelay(UPDATE_CANDIDATE_STAGE_MIN_DURATION_MS),
         patchCandidateStage(candidateId, pipelineStageId),
       ]);
       return result;
     },
+    onMutate: async (variables) => {
+      if (organizationId == null || organizationId.length === 0) {
+        return { previous: undefined };
+      }
+      // Snapshot before any await so we can roll back
+      const previous = queryClient.getQueryData<CandidateListRow[]>(listKey);
+      const targetRow = previous?.find((r) => r.id === variables.candidateId);
+      const newStage = targetRow?.recruitment.stages.find(
+        (s) => s.id === variables.pipelineStageId,
+      );
+      // Apply optimistic update synchronously (no await before this) so the
+      // cache reflects the new stage before the DragOverlay unmounts.
+      if (previous != null && targetRow != null && newStage != null) {
+        queryClient.setQueryData<CandidateListRow[]>(listKey, (current) => {
+          const base = current ?? previous;
+          return base.map((r) =>
+            r.id === variables.candidateId
+              ? {
+                  ...r,
+                  recruitment: { ...r.recruitment, stage: newStage },
+                }
+              : r,
+          );
+        });
+      }
+      // Cancel in-flight list fetches after the update to avoid overwriting it
+      await queryClient.cancelQueries({ queryKey: listKey });
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (
+        context != null &&
+        context.previous !== undefined &&
+        organizationId != null &&
+        organizationId.length > 0
+      ) {
+        queryClient.setQueryData(listKey, context.previous);
+      }
+    },
     onSuccess: async () => {
       await queryClient.refetchQueries({
-        queryKey: candidateKeys.list(organizationId),
+        queryKey: listKey,
       });
     },
   });

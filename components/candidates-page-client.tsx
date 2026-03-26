@@ -8,21 +8,22 @@ import {
   RefreshCwIcon,
   UploadCloudIcon,
 } from "lucide-react";
-import { parseAsString, useQueryState } from "nuqs";
+import {
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryState,
+} from "nuqs";
 import { Activity, useEffect, useMemo, useRef } from "react";
 
 import { CandidateCvViewer } from "@/components/candidate-cv-viewer";
 import { CandidateProfilePanel } from "@/components/candidate-profile-panel";
 import { CandidateStageControl } from "@/components/candidate-stage-control";
+import {
+  CandidatesKanbanBoard,
+  CandidatesViewToggle,
+} from "@/components/candidates-kanban-board";
 import { CvUploadDialog } from "@/components/cv-upload-dialog";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,10 +32,17 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { useReparseCandidateMutation } from "@/models/candidate/mutations";
 import { useCandidatesList } from "@/models/candidate/queries";
 import type { CandidateListRow } from "@/models/candidate/types";
-import { cn } from "@/lib/utils";
 
 export type CandidatesPageClientProps = {
   organizationId: string | null;
@@ -151,6 +159,11 @@ export function CandidatesPageClient({
 
   const reparseMutation = useReparseCandidateMutation(organizationId);
 
+  const [candidatesView, setCandidatesView] = useQueryState(
+    "view",
+    parseAsStringLiteral(["list", "board"]).withDefault("list"),
+  );
+
   const [candidateId, setCandidateId] = useQueryState(
     "candidate",
     parseAsString,
@@ -244,11 +257,11 @@ export function CandidatesPageClient({
                 Extracted{" "}
                 {r.extractedAt
                   ? new Date(
-                      r.extractedAt as string | number | Date,
-                    ).toLocaleString(undefined, {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })
+                    r.extractedAt as string | number | Date,
+                  ).toLocaleString(undefined, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
                   : "—"}
               </p>
               {r.technicalFocus && r.technicalFocus.length > 0 ? (
@@ -275,11 +288,22 @@ export function CandidatesPageClient({
     </ul>
   );
 
+  const boardSection = (
+    <CandidatesKanbanBoard
+      organizationId={organizationId}
+      rows={rows}
+      selectedCandidateId={candidateId}
+      onOpenCandidate={(id) => void setCandidateId(id)}
+    />
+  );
+
+  const listOrBoard = candidatesView === "list" ? listSection : boardSection;
+
   const listAndDetail =
     organizationId && rows.length > 0 ? (
       <div className="relative flex min-h-0 flex-1 flex-col">
         <Activity mode={detailOpen ? "hidden" : "visible"} name="candidates-list">
-          {listSection}
+          {listOrBoard}
         </Activity>
         <Activity mode={detailOpen ? "visible" : "hidden"} name="candidate-detail">
           {detailPayload ? (
@@ -348,6 +372,12 @@ export function CandidatesPageClient({
               <ArrowLeftIcon data-icon="inline-start" />
               Back
             </Button>
+          ) : null}
+          {!detailOpen && organizationId && rows.length > 0 ? (
+            <CandidatesViewToggle
+              view={candidatesView}
+              onViewChange={(v) => void setCandidatesView(v)}
+            />
           ) : null}
           {organizationId ? (
             <CvUploadDialog
