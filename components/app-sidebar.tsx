@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTheme } from "next-themes"
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
@@ -25,7 +26,51 @@ import {
   TerminalIcon,
   LayoutDashboardIcon,
   UsersIcon,
+  MoonIcon,
+  SunIcon,
 } from "lucide-react"
+
+function SidebarThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isDark = resolvedTheme === "dark"
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        type="button"
+        size="sm"
+        tooltip={
+          mounted
+            ? isDark
+              ? "Switch to light theme"
+              : "Switch to dark theme"
+            : "Theme"
+        }
+        aria-label={
+          mounted
+            ? isDark
+              ? "Switch to light theme"
+              : "Switch to dark theme"
+            : "Theme"
+        }
+        onClick={() => setTheme(isDark ? "light" : "dark")}
+      >
+        {mounted && isDark ? (
+          <SunIcon />
+        ) : (
+          <MoonIcon />
+        )}
+        <span>Theme</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  )
+}
 
 const data = {
   user: {
@@ -200,7 +245,11 @@ export function AppSidebar({
           ]}
           organizationId={organizationId}
         />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavSecondary
+          prepend={<SidebarThemeToggle />}
+          items={data.navSecondary}
+          className="mt-auto"
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

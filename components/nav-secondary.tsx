@@ -12,6 +12,7 @@ import {
 
 export function NavSecondary({
   items,
+  prepend,
   ...props
 }: {
   items: {
@@ -19,11 +20,13 @@ export function NavSecondary({
     url: string
     icon: React.ReactNode
   }[]
+  prepend?: React.ReactNode
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
         <SidebarMenu>
+          {prepend}
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild size="sm">
