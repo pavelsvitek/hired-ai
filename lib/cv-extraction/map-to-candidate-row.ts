@@ -7,24 +7,15 @@ function parseDate(value: string | null): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function mapExtractionToCandidateInsert(params: {
-  id: string;
-  organizationId: string;
-  createdByUserId: string | null;
-  extraction: CvExtraction;
-  cvStorageKey: string;
-  cvOriginalFilename: string;
-  cvMimeType: string;
-  extractedAt: Date;
-}) {
-  const { extraction, ...rest } = params;
+function mapExtractionToCandidateFields(
+  extraction: CvExtraction,
+  extractedAt: Date,
+) {
   const conf = extraction.work_authorization.confidence;
   const workAuthNeedsReview = conf === "low" || conf === "medium";
+  const modelId = getGeminiModelId();
 
   return {
-    id: rest.id,
-    organizationId: rest.organizationId,
-    createdByUserId: rest.createdByUserId,
     fullName: extraction.full_name,
     email: extraction.email,
     dateOfBirth: parseDate(extraction.date_of_birth.value),
@@ -50,10 +41,39 @@ export function mapExtractionToCandidateInsert(params: {
     extractionWarnings: extraction.warnings,
     extractionMeta: {
       schemaVersion: 1,
-      model: getGeminiModelId(),
+      model: modelId,
     },
-    extractionModel: getGeminiModelId(),
-    extractedAt: rest.extractedAt,
+    extractionModel: modelId,
+    extractedAt,
+  };
+}
+
+export function mapExtractionToCandidateUpdate(params: {
+  extraction: CvExtraction;
+  extractedAt: Date;
+}) {
+  return mapExtractionToCandidateFields(
+    params.extraction,
+    params.extractedAt,
+  );
+}
+
+export function mapExtractionToCandidateInsert(params: {
+  id: string;
+  organizationId: string;
+  createdByUserId: string | null;
+  extraction: CvExtraction;
+  cvStorageKey: string;
+  cvOriginalFilename: string;
+  cvMimeType: string;
+  extractedAt: Date;
+}) {
+  const { extraction, ...rest } = params;
+  return {
+    id: rest.id,
+    organizationId: rest.organizationId,
+    createdByUserId: rest.createdByUserId,
+    ...mapExtractionToCandidateFields(extraction, rest.extractedAt),
     cvStorageKey: rest.cvStorageKey,
     cvOriginalFilename: rest.cvOriginalFilename,
     cvMimeType: rest.cvMimeType,

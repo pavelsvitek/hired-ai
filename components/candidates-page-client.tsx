@@ -1,16 +1,28 @@
 "use client";
 
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { ArrowLeftIcon, UploadCloudIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  Loader2Icon,
+  MoreVerticalIcon,
+  RefreshCwIcon,
+  UploadCloudIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
-import { Activity, useEffect, useMemo, useRef } from "react";
+import { Activity, useEffect, useMemo, useRef, useState } from "react";
 
 import { CandidateCvViewer } from "@/components/candidate-cv-viewer";
 import { CandidateProfilePanel } from "@/components/candidate-profile-panel";
 import { CvUploadDialog } from "@/components/cv-upload-dialog";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -34,6 +46,81 @@ function listTitle(r: CandidateRowSelect) {
     r.email?.trim() ||
     r.cvOriginalFilename?.trim() ||
     "Untitled candidate"
+  );
+}
+
+function CandidateDetailBody({
+  origin,
+  detailPayload,
+  reparseBusy,
+  reparseError,
+  onReparse,
+}: {
+  origin: string;
+  detailPayload: { candidateId: string; row: CandidateRowSelect };
+  reparseBusy: boolean;
+  reparseError: string | null;
+  onReparse: () => void | Promise<void>;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-4 pb-4 pl-0 pr-4 pt-0 lg:flex-row">
+      <div className="flex min-w-0 flex-[0.65] flex-col gap-2">
+        <p className="sr-only" id="pdf-preview-label">
+          Candidate CV preview
+        </p>
+        <CandidateCvViewer
+          cvUrl={`${origin}/api/candidates/${detailPayload.candidateId}/cv`}
+          mimeType={detailPayload.row.cvMimeType}
+          pdfDocumentId={`${detailPayload.candidateId}:${detailPayload.row.cvStorageKey}`}
+        />
+      </div>
+      <aside
+        className="flex max-h-none min-w-0 flex-[0.35] flex-col overflow-y-auto border-t border-border lg:max-h-[calc(100dvh-4.5rem)] lg:border-l lg:border-t-0 lg:pl-6"
+        aria-labelledby="profile-panel-heading"
+      >
+        <div className="mb-4 space-y-2">
+          <div className="flex items-start gap-1">
+            <h1
+              id="profile-panel-heading"
+              className="min-w-0 flex-1 text-lg font-semibold leading-tight"
+            >
+              {listTitle(detailPayload.row)}
+            </h1>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0 text-muted-foreground"
+                  disabled={reparseBusy}
+                  aria-label="Candidate actions"
+                >
+                  {reparseBusy ? (
+                    <Loader2Icon className="size-4 animate-spin" />
+                  ) : (
+                    <MoreVerticalIcon className="size-4" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  disabled={reparseBusy}
+                  onClick={() => void onReparse()}
+                >
+                  <RefreshCwIcon className="size-4 text-muted-foreground" />
+                  Parse CV again
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {reparseError ? (
+            <p className="text-sm text-destructive">{reparseError}</p>
+          ) : null}
+        </div>
+        <CandidateProfilePanel row={detailPayload.row} />
+      </aside>
+    </div>
   );
 }
 
@@ -84,6 +171,13 @@ export function CandidatesPageClient({
     void setCandidateId(id);
     router.refresh();
   };
+
+  const [reparseBusy, setReparseBusy] = useState(false);
+  const [reparseError, setReparseError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setReparseError(null);
+  }, [candidateId]);
 
   const emptyState = (
     <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed bg-muted/30 p-8">
@@ -162,30 +256,43 @@ export function CandidatesPageClient({
         </Activity>
         <Activity mode={detailOpen ? "visible" : "hidden"} name="candidate-detail">
           {detailPayload ? (
-            <div className="flex min-h-0 flex-1 flex-col gap-4 pb-4 pl-0 pr-4 pt-0 lg:flex-row">
-              <div className="flex min-w-0 flex-[0.65] flex-col gap-2">
-                <p className="sr-only" id="pdf-preview-label">
-                  Candidate CV preview
-                </p>
-                <CandidateCvViewer
-                  cvUrl={`${origin}/api/candidates/${detailPayload.candidateId}/cv`}
-                  mimeType={detailPayload.row.cvMimeType}
-                  pdfDocumentId={`${detailPayload.candidateId}:${detailPayload.row.cvStorageKey}`}
-                />
-              </div>
-              <aside
-                className="flex max-h-none min-w-0 flex-[0.35] flex-col overflow-y-auto border-t border-border lg:max-h-[calc(100dvh-4.5rem)] lg:border-l lg:border-t-0 lg:pl-6"
-                aria-labelledby="profile-panel-heading"
-              >
-                <h1
-                  id="profile-panel-heading"
-                  className="mb-4 text-lg font-semibold leading-tight"
-                >
-                  {listTitle(detailPayload.row)}
-                </h1>
-                <CandidateProfilePanel row={detailPayload.row} />
-              </aside>
-            </div>
+            <CandidateDetailBody
+              origin={origin}
+              detailPayload={detailPayload}
+              reparseBusy={reparseBusy}
+              reparseError={reparseError}
+              onReparse={async () => {
+                setReparseError(null);
+                setReparseBusy(true);
+                try {
+                  const res = await fetch(
+                    `/api/candidates/${detailPayload.candidateId}/reparse`,
+                    { method: "POST" },
+                  );
+                  let message = "Could not parse CV";
+                  try {
+                    const data: unknown = await res.json();
+                    if (
+                      typeof data === "object" &&
+                      data !== null &&
+                      "error" in data &&
+                      typeof (data as { error: unknown }).error === "string"
+                    ) {
+                      message = (data as { error: string }).error;
+                    }
+                  } catch {
+                    /* use default message */
+                  }
+                  if (!res.ok) {
+                    setReparseError(message);
+                    return;
+                  }
+                  router.refresh();
+                } finally {
+                  setReparseBusy(false);
+                }
+              }}
+            />
           ) : null}
         </Activity>
       </div>
