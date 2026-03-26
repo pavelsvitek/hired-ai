@@ -15,7 +15,17 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, LifeBuoyIcon, SendIcon, TerminalIcon } from "lucide-react"
+import {
+  TerminalSquareIcon,
+  BotIcon,
+  BookOpenIcon,
+  Settings2Icon,
+  LifeBuoyIcon,
+  SendIcon,
+  TerminalIcon,
+  LayoutDashboardIcon,
+  UsersIcon,
+} from "lucide-react"
 
 const data = {
   user: {
@@ -24,6 +34,12 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: <LayoutDashboardIcon />,
+      isActive: false,
+    },
     {
       title: "Playground",
       url: "#",
@@ -175,7 +191,13 @@ export function AppSidebar({
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavProjects
-          projects={data.projects}
+          projects={[
+            {
+              name: "All candidates",
+              url: "/dashboard/candidates",
+              icon: <UsersIcon />,
+            },
+          ]}
           organizationId={organizationId}
         />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
