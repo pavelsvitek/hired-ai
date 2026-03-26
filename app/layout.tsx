@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins, Roboto_Mono } from "next/font/google";
+import { AgentationDev } from "@/components/agentation-dev";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -31,7 +32,10 @@ export default function RootLayout({
         className={`${fontSans.variable} ${fontMono.variable} min-h-full flex flex-col antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <TooltipProvider>{children}</TooltipProvider>
+          <TooltipProvider>
+            {children}
+            <AgentationDev />
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>
