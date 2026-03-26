@@ -1,11 +1,17 @@
 import type { ReactNode } from "react";
 
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+
 import { EmbedPDFPersistentProvider } from "@/components/embed-pdf/EmbedPDFViewerCustom";
 
 /**
- * Single provider for /candidates and /candidates/[id] so the PDF engine and
- * parsed documents stay in memory when navigating between the list and detail.
+ * PDF engine + nuqs: list and detail share one route so the viewer stays
+ * mounted when switching candidates; URL uses ?candidate= for refresh/share.
  */
 export default function CandidatesLayout({ children }: { children: ReactNode }) {
-  return <EmbedPDFPersistentProvider>{children}</EmbedPDFPersistentProvider>;
+  return (
+    <EmbedPDFPersistentProvider>
+      <NuqsAdapter>{children}</NuqsAdapter>
+    </EmbedPDFPersistentProvider>
+  );
 }

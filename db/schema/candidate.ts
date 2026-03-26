@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, type InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -72,6 +72,8 @@ export const candidate = pgTable(
     index("candidate_created_by_user_id_idx").on(table.createdByUserId),
   ],
 );
+
+export type CandidateRowSelect = InferSelectModel<typeof candidate>;
 
 export const candidateRelations = relations(candidate, ({ one }) => ({
   organization: one(organization, {

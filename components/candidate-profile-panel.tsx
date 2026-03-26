@@ -1,3 +1,5 @@
+"use client";
+
 import type { InferSelectModel } from "drizzle-orm";
 import type { ReactNode } from "react";
 
@@ -81,22 +83,39 @@ function parseSkills(raw: unknown): string[] {
   return raw.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
 }
 
-function formatDate(d: Date | null | undefined, precision?: string | null): string {
-  if (!d) {
+function coerceDate(
+  d: Date | string | null | undefined,
+): Date | null {
+  if (d == null || d === "") {
+    return null;
+  }
+  if (d instanceof Date) {
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const parsed = new Date(d);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatDate(
+  d: Date | string | null | undefined,
+  precision?: string | null,
+): string {
+  const date = coerceDate(d);
+  if (!date) {
     return "—";
   }
   try {
     if (precision === "year") {
-      return String(d.getUTCFullYear());
+      return String(date.getUTCFullYear());
     }
     if (precision === "month") {
-      return d.toLocaleDateString(undefined, {
+      return date.toLocaleDateString(undefined, {
         year: "numeric",
         month: "short",
         timeZone: "UTC",
       });
     }
-    return d.toLocaleDateString(undefined, {
+    return date.toLocaleDateString(undefined, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -304,9 +323,7 @@ export function CandidateProfilePanel({ row }: { row: CandidateRow }) {
         )}
         <p className="text-xs text-muted-foreground">
           Model: {em(row.extractionModel)} · Extracted{" "}
-          {row.extractedAt
-            ? row.extractedAt.toLocaleString()
-            : "—"}
+          {coerceDate(row.extractedAt)?.toLocaleString() ?? "—"}
         </p>
       </Section>
 
@@ -317,10 +334,10 @@ export function CandidateProfilePanel({ row }: { row: CandidateRow }) {
           Original file: {em(row.cvOriginalFilename)}
         </p>
         <p className="text-xs text-muted-foreground">
-          Created: {row.createdAt ? row.createdAt.toLocaleString() : "—"}
+          Created: {coerceDate(row.createdAt)?.toLocaleString() ?? "—"}
         </p>
         <p className="text-xs text-muted-foreground">
-          Updated: {row.updatedAt ? row.updatedAt.toLocaleString() : "—"}
+          Updated: {coerceDate(row.updatedAt)?.toLocaleString() ?? "—"}
         </p>
       </Section>
     </div>
