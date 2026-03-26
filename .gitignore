@@ -42,3 +42,6 @@ yarn-error.log*
 next-env.d.ts
 
 .cursor/plans
+
+# local CV uploads (see CV_UPLOAD_DIR)
+.data/

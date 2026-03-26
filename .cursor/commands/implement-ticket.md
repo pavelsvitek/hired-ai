@@ -29,7 +29,7 @@ Derive a **kebab-case** slug from the issue title:
 - ASCII only; drop or transliterate symbols that are not URL/git-safe.
 - Truncate to about **40 characters** (after hyphens), without trailing hyphen.
 
-**Branch name** (finalize during planning; **create the branch only after** Approve/Build — see §5 and §6):
+**Branch name**:
 
 ```text
 <feature|fix>/<issue-identifier>-<short-slug>
@@ -37,13 +37,28 @@ Derive a **kebab-case** slug from the issue title:
 
 Example: `feature/PAV-123-add-export-to-csv`.
 
+## 4. Create branch from `origin/main` (always first — before plan, Linear, or source edits)
+
+**Immediately** after **§1–§3**, and **before** writing the plan file, posting to Linear, or changing application/package **source** (anything outside `.cursor/plans/` for this ticket), create and check out the ticket branch from `origin/main`:
+
+```bash
+git fetch origin main
+git checkout -b '<feature|fix>/<identifier>-<short-slug>' origin/main
+```
+
+If the branch already exists locally, check it out after `git fetch origin main` (e.g. `git checkout '<branch>'`) instead of failing on `checkout -b`. If it was created from the wrong base, reconcile with the user (e.g. rebase onto `origin/main`) before implementing.
+
+If the working tree is dirty and checkout would fail, report the situation and wait for the user to stash/commit before retrying.
+
+After this step, confirm `git branch --show-current` matches the ticket branch before continuing.
+
 ### Invariant: branch before implementation
 
-**Do not** change application or package **source** (anything outside `.cursor/plans/` for this ticket) until §6 has succeeded and your current branch is the ticket branch (`git branch --show-current` matches §6). If the issue is resumed later and you are not on that branch, run §6 (or `git checkout` the existing branch) **before** the first source edit.
+**Do not** change application or package **source** (anything outside `.cursor/plans/` for this ticket) until **§4** has succeeded and your current branch is the ticket branch (`git branch --show-current` matches **§4**). If the issue is resumed later and you are not on that branch, run **§4** (or `git checkout` the existing branch) **before** the first source edit.
 
-On **Build**, the order in a single run must be: **§6 → §7 → §8** with **no** implementation (§8) until §6 is done; do not parallelize code edits with Linear or git setup.
+Implementation order after the plan exists: **§6 → §7 → §8** when the user chooses **Build**; **§8** must not start until **§7** has completed. Do not parallelize code edits with Linear setup.
 
-## 4. Write the plan file (first deliverable)
+## 5. Write the plan file (first deliverable)
 
 1. Ensure `.cursor/plans` exists under the repo root.
 2. Create or overwrite:
@@ -61,36 +76,19 @@ On **Build**, the order in a single run must be: **§6 → §7 → §8** with **
    - **Checklist** of concrete tasks
    - **Risks / open questions**
 
-## 5. Pause for the user (do not skip)
+## 6. Pause for the user (do not skip)
 
 After saving the plan, **stop and ask** the user what they want next. Offer these options clearly:
 
-1. **Refine** — They reply with edits; you update the same `.plan.md` until they are satisfied (no Linear or git steps yet beyond the plan file).
+1. **Refine** — They reply with edits; you update the same `.plan.md` until they are satisfied (no Linear steps until **Approve** or **Build**).
 2. **Approve** — They confirm the plan is final.
-3. **Build** — Same as approve, but you **also** start implementing the ticket after **§6–§7**. Implementation (**§8**) may begin only after the branch from **§6** exists and is checked out.
+3. **Build** — Same as approve, but you **also** start implementing the ticket after **§7–§8**. Implementation (**§8**) may begin only after **§7** has completed and only while on the ticket branch from **§4**.
 
-Do **not** create a branch, change Linear, or post comments until the user has chosen **Approve** or **Build**.
+Do **not** change Linear **until** the user has chosen **Approve** or **Build**. The ticket branch should **already** exist from **§4**.
 
-Once they choose **Build**, **§6 (git branch) is mandatory before §8**: never start implementing the plan until checkout from `origin/main` has succeeded.
+Once they choose **Build**, **§7 (Linear) is mandatory before §8**: never start implementing the plan until Linear has been updated per **§7**.
 
 If they only refine, iterate on the plan file until they say **Approve** or **Build**.
-
-## 6. After Approve or Build — git branch from `origin/main` (before §7 and before §8)
-
-Run **this first** after Approve or Build, **before** posting to Linear (**§7**) and **before** any implementation (**§8**).
-
-In the repo (adjust if the user’s default branch is not `main`; prefer `origin/main` as they requested):
-
-```bash
-git fetch origin main
-git checkout -b '<feature|fix>/<identifier>-<short-slug>' origin/main
-```
-
-If the branch already exists locally, check it out from `origin/main` as appropriate (e.g. `git checkout '<branch>'` after fetch) instead of failing on `checkout -b`.
-
-If the working tree is dirty and checkout would fail, report the situation and wait for the user to stash/commit before retrying.
-
-After this step, confirm you are on the ticket branch before continuing.
 
 ## 7. After Approve or Build — Linear: comment and status
 
@@ -111,7 +109,7 @@ After this step, confirm you are on the ticket branch before continuing.
 
 ## 8. If they chose Build
 
-**Only after §6 and §7** (and only while on the §6 branch): implement the ticket — follow the plan, keep changes scoped, and use the project’s existing patterns. If §6 was skipped or you are not on the ticket branch, **stop** and run §6 before any source changes.
+**Only after §7** (and only while on the ticket branch from **§4**): implement the ticket — follow the plan, keep changes scoped, and use the project’s existing patterns. If **§4** was skipped or you are not on the ticket branch, **stop** and run **§4** before any source changes.
 
 ---
 
@@ -119,9 +117,9 @@ After this step, confirm you are on the ticket branch before continuing.
 
 | Step               | Action                                                                            |
 | ------------------ | --------------------------------------------------------------------------------- |
-| Issue details      | `get_issue`                                                                       |
+| Branch (first)     | **§4** right after **§1–§3**: `git fetch origin main` + `git checkout -b … origin/main` |
 | Plan file          | `.cursor/plans/<id>-<slug>.plan.md`                                               |
 | User gate          | Refine → edit plan; Approve / Build → continue                                    |
-| Branch             | §6 **before** §7 and **before** §8: `git fetch` + `git checkout -b … origin/main` |
-| Linear comment     | `save_comment`                                                                    |
+| Issue details      | **§1** (`get_issue`)                                                              |
+| Linear comment     | `save_comment` (**§7**, after Approve/Build)                                      |
 | Linear in progress | `list_issue_statuses` + `save_issue` (`state`)                                    |

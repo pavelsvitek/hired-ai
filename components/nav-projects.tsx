@@ -1,5 +1,8 @@
 "use client"
 
+import type { ReactNode } from "react"
+
+import { CvUploadDialog } from "@/components/cv-upload-dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,22 +19,30 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { MoreHorizontalIcon, FolderIcon, ShareIcon, Trash2Icon } from "lucide-react"
+import {
+  MoreHorizontalIcon,
+  FolderIcon,
+  ShareIcon,
+  Trash2Icon,
+  UploadCloudIcon,
+} from "lucide-react"
 
 export function NavProjects({
   projects,
+  organizationId = null,
 }: {
   projects: {
     name: string
     url: string
-    icon: React.ReactNode
+    icon: ReactNode
   }[]
+  organizationId?: string | null
 }) {
   const { isMobile } = useSidebar()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <SidebarGroupLabel>Candidates</SidebarGroupLabel>
       <SidebarMenu>
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
@@ -75,11 +86,15 @@ export function NavProjects({
           </SidebarMenuItem>
         ))}
         <SidebarMenuItem>
-          <SidebarMenuButton>
-            <MoreHorizontalIcon
-            />
-            <span>More</span>
-          </SidebarMenuButton>
+          <CvUploadDialog
+            organizationId={organizationId}
+            trigger={
+              <SidebarMenuButton tooltip="Upload CV">
+                <UploadCloudIcon />
+                <span>Upload CV</span>
+              </SidebarMenuButton>
+            }
+          />
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
