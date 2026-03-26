@@ -689,7 +689,7 @@ function PDFViewerBody({
       <AutoZoomBridge documentId={documentId} enabled={autoZoom} />
 
       {/* Toolbar */}
-      <div className="flex shrink-0 items-center border-b border-border bg-background px-3 py-1">
+      <div className="flex shrink-0 items-center border-b border-border bg-background pl-1 pr-2 py-1">
         <ZoomControls documentId={documentId} onAutoZoomChange={setAutoZoom} />
         <button
           className={cn('ml-1 rounded-md p-1.5 transition-colors', {
