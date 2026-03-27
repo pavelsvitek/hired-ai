@@ -136,7 +136,9 @@ export function FileDropzone({
         </span>
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">
-            Drop a PDF here or click to browse
+            {maxFiles > 1
+              ? "Drop PDFs here or click to browse"
+              : "Drop a PDF here or click to browse"}
           </p>
           <p className="text-xs text-muted-foreground">
             PDF only, up to {formatSize(maxSizeBytes)}

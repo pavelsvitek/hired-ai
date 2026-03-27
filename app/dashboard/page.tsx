@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { UploadCloudIcon } from "lucide-react";
+import { FilesIcon, UploadCloudIcon } from "lucide-react";
 
+import { CvBulkUploadDialog } from "@/components/cv-bulk-upload-dialog";
 import { CvUploadDialog } from "@/components/cv-upload-dialog";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,15 @@ export default async function Page() {
               <Button size="sm" variant="outline">
                 <UploadCloudIcon data-icon="inline-start" />
                 Upload CV
+              </Button>
+            }
+          />
+          <CvBulkUploadDialog
+            organizationId={organizationId}
+            trigger={
+              <Button size="sm" variant="outline">
+                <FilesIcon data-icon="inline-start" />
+                Bulk upload
               </Button>
             }
           />

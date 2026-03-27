@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 
+import { CvBulkUploadDialog } from "@/components/cv-bulk-upload-dialog"
 import { CvUploadDialog } from "@/components/cv-upload-dialog"
 import {
   DropdownMenu,
@@ -24,6 +25,7 @@ import {
   FolderIcon,
   ShareIcon,
   Trash2Icon,
+  FilesIcon,
   UploadCloudIcon,
 } from "lucide-react"
 
@@ -92,6 +94,17 @@ export function NavProjects({
               <SidebarMenuButton tooltip="Upload CV">
                 <UploadCloudIcon />
                 <span>Upload CV</span>
+              </SidebarMenuButton>
+            }
+          />
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <CvBulkUploadDialog
+            organizationId={organizationId}
+            trigger={
+              <SidebarMenuButton tooltip="Bulk upload CVs">
+                <FilesIcon />
+                <span>Bulk upload</span>
               </SidebarMenuButton>
             }
           />

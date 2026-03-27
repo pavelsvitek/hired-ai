@@ -10,6 +10,19 @@ import type {
   CandidateUploadResponse,
 } from "@/models/candidate/types";
 
+export const BULK_CV_UPLOAD_MAX_FILES = 50;
+
+export type BulkUploadCvsProgress = {
+  index: number;
+  total: number;
+  fileName: string;
+};
+
+export type BulkUploadCvsResult = {
+  candidateIds: string[];
+  failures: { fileName: string; message: string }[];
+};
+
 async function postUploadCv(
   organizationId: string,
   file: File,
@@ -42,6 +55,58 @@ async function postUploadCv(
     throw new Error("Invalid upload response");
   }
   return { candidateId: (data as CandidateUploadResponse).candidateId };
+}
+
+export async function bulkUploadCvs(
+  organizationId: string,
+  files: File[],
+  onProgress?: (info: BulkUploadCvsProgress) => void,
+): Promise<BulkUploadCvsResult> {
+  if (files.length > BULK_CV_UPLOAD_MAX_FILES) {
+    throw new Error(
+      `At most ${BULK_CV_UPLOAD_MAX_FILES} files allowed per batch.`,
+    );
+  }
+  const candidateIds: string[] = [];
+  const failures: { fileName: string; message: string }[] = [];
+  const total = files.length;
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]!;
+    onProgress?.({ index: i + 1, total, fileName: file.name });
+    try {
+      const { candidateId } = await postUploadCv(organizationId, file);
+      candidateIds.push(candidateId);
+    } catch (err) {
+      failures.push({
+        fileName: file.name,
+        message: err instanceof Error ? err.message : "Upload failed",
+      });
+    }
+  }
+  return { candidateIds, failures };
+}
+
+type BulkUploadVars = {
+  files: File[];
+  onProgress?: (info: BulkUploadCvsProgress) => void;
+};
+
+export function useBulkUploadCandidatesMutation(organizationId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ files, onProgress }: BulkUploadVars) => {
+      if (!organizationId) {
+        throw new Error("No organization selected.");
+      }
+      return bulkUploadCvs(organizationId, files, onProgress);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: candidateKeys.list(organizationId),
+      });
+    },
+  });
 }
 
 export function useUploadCandidateMutation(organizationId: string | null) {

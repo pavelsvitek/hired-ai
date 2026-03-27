@@ -3,6 +3,7 @@
 import { useHotkey } from "@tanstack/react-hotkeys";
 import {
   ArrowLeftIcon,
+  FilesIcon,
   Loader2Icon,
   MoreVerticalIcon,
   RefreshCwIcon,
@@ -22,6 +23,7 @@ import {
   CandidatesKanbanBoard,
   CandidatesViewToggle,
 } from "@/components/candidates-kanban-board";
+import { CvBulkUploadDialog } from "@/components/cv-bulk-upload-dialog";
 import { CvUploadDialog } from "@/components/cv-upload-dialog";
 import { DashboardShell } from "@/components/dashboard-shell";
 import {
@@ -211,6 +213,15 @@ export function CandidatesPageClient({
     void setCandidateId(id);
   };
 
+  const afterBulkUpload = ({
+    candidateIds,
+  }: {
+    candidateIds: string[];
+  }) => {
+    const last = candidateIds[candidateIds.length - 1];
+    if (last) void setCandidateId(last);
+  };
+
   const resetReparse = reparseMutation.reset;
   useEffect(() => {
     resetReparse();
@@ -222,11 +233,23 @@ export function CandidatesPageClient({
         No candidates yet. Upload a CV to add your first profile.
       </p>
       {organizationId ? (
-        <CvUploadDialog
-          organizationId={organizationId}
-          onSuccess={afterUpload}
-          trigger={<Button>Upload CV</Button>}
-        />
+        <div className="flex flex-wrap gap-2">
+          <CvUploadDialog
+            organizationId={organizationId}
+            onSuccess={afterUpload}
+            trigger={<Button>Upload CV</Button>}
+          />
+          <CvBulkUploadDialog
+            organizationId={organizationId}
+            onComplete={afterBulkUpload}
+            trigger={
+              <Button variant="outline">
+                <FilesIcon data-icon="inline-start" />
+                Bulk upload
+              </Button>
+            }
+          />
+        </div>
       ) : null}
     </div>
   );
@@ -380,16 +403,28 @@ export function CandidatesPageClient({
             />
           ) : null}
           {organizationId ? (
-            <CvUploadDialog
-              organizationId={organizationId}
-              onSuccess={afterUpload}
-              trigger={
-                <Button size="sm" variant="outline">
-                  <UploadCloudIcon data-icon="inline-start" />
-                  Upload CV
-                </Button>
-              }
-            />
+            <>
+              <CvUploadDialog
+                organizationId={organizationId}
+                onSuccess={afterUpload}
+                trigger={
+                  <Button size="sm" variant="outline">
+                    <UploadCloudIcon data-icon="inline-start" />
+                    Upload CV
+                  </Button>
+                }
+              />
+              <CvBulkUploadDialog
+                organizationId={organizationId}
+                onComplete={afterBulkUpload}
+                trigger={
+                  <Button size="sm" variant="outline">
+                    <FilesIcon data-icon="inline-start" />
+                    Bulk upload
+                  </Button>
+                }
+              />
+            </>
           ) : null}
         </>
       }
