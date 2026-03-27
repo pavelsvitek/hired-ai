@@ -7,20 +7,27 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 export function DashboardShell({
   organizationId,
   breadcrumb,
   headerAction,
   children,
+  /** `contain`: shell is viewport-height, main does not scroll (internal panes handle scroll). `natural`: main grows with content and the window scrolls. */
+  mainScroll = "natural",
 }: {
   organizationId: string | null;
   breadcrumb: ReactNode;
   headerAction?: ReactNode;
   children: ReactNode;
+  mainScroll?: "contain" | "natural";
 }) {
+  const contain = mainScroll === "contain";
   return (
-    <SidebarProvider className="h-dvh max-h-dvh min-h-0 overflow-hidden">
+    <SidebarProvider
+      className={cn(contain && "h-dvh max-h-dvh min-h-0 overflow-hidden")}
+    >
       <AppSidebar organizationId={organizationId} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2">
@@ -38,7 +45,12 @@ export function DashboardShell({
             ) : null}
           </div>
         </header>
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div
+          className={cn(
+            "flex min-h-0 flex-1 flex-col",
+            contain && "overflow-y-hidden",
+          )}
+        >
           {children}
         </div>
       </SidebarInset>

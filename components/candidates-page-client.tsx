@@ -322,44 +322,66 @@ export function CandidatesPageClient({
 
   const listOrBoard = candidatesView === "list" ? listSection : boardSection;
 
+  const boardFillsViewport =
+    organizationId != null &&
+    organizationId.length > 0 &&
+    rows.length > 0 &&
+    candidatesView === "board" &&
+    !detailOpen;
+
+  const candidateDetailPanel =
+    detailPayload != null ? (
+      <CandidateDetailBody
+        organizationId={organizationId}
+        origin={origin}
+        detailPayload={detailPayload}
+        reparseBusy={reparseMutation.isPending}
+        reparseError={
+          reparseMutation.error instanceof Error
+            ? reparseMutation.error.message
+            : reparseMutation.error
+              ? "Could not parse CV"
+              : null
+        }
+        onReparse={() => {
+          reparseMutation.reset();
+          reparseMutation.mutate({
+            candidateId: detailPayload.candidateId,
+          });
+        }}
+      />
+    ) : null;
+
   const listAndDetail =
     organizationId && rows.length > 0 ? (
-      <div className="relative isolate min-h-0 flex-1">
-        <Activity mode={detailOpen ? "hidden" : "visible"} name="candidates-list">
-          <div className="absolute inset-0 flex min-h-0 flex-col overflow-hidden">
-            {listOrBoard}
-          </div>
-        </Activity>
-        <Activity mode={detailOpen ? "visible" : "hidden"} name="candidate-detail">
-          <div className="absolute inset-0 flex min-h-0 flex-col overflow-hidden">
-            {detailPayload ? (
-              <CandidateDetailBody
-                organizationId={organizationId}
-                origin={origin}
-                detailPayload={detailPayload}
-                reparseBusy={reparseMutation.isPending}
-                reparseError={
-                  reparseMutation.error instanceof Error
-                    ? reparseMutation.error.message
-                    : reparseMutation.error
-                      ? "Could not parse CV"
-                      : null
-                }
-                onReparse={() => {
-                  reparseMutation.reset();
-                  reparseMutation.mutate({
-                    candidateId: detailPayload.candidateId,
-                  });
-                }}
-              />
-            ) : null}
-          </div>
-        </Activity>
-      </div>
+      boardFillsViewport ? (
+        <div className="relative min-h-0 flex-1">
+          <Activity mode={detailOpen ? "hidden" : "visible"} name="candidates-list">
+            <div className="absolute inset-0 flex min-h-0 flex-col overflow-hidden">
+              {listOrBoard}
+            </div>
+          </Activity>
+          <Activity mode={detailOpen ? "visible" : "hidden"} name="candidate-detail">
+            <div className="absolute inset-0 flex min-h-0 flex-col overflow-hidden">
+              {candidateDetailPanel}
+            </div>
+          </Activity>
+        </div>
+      ) : (
+        <div className="flex flex-col">
+          <Activity mode={detailOpen ? "hidden" : "visible"} name="candidates-list">
+            <div className="flex flex-col">{listOrBoard}</div>
+          </Activity>
+          <Activity mode={detailOpen ? "visible" : "hidden"} name="candidate-detail">
+            <div className="flex flex-col">{candidateDetailPanel}</div>
+          </Activity>
+        </div>
+      )
     ) : null;
 
   return (
     <DashboardShell
+      mainScroll={boardFillsViewport ? "contain" : "natural"}
       organizationId={organizationId}
       breadcrumb={
         <Breadcrumb>
@@ -433,7 +455,12 @@ export function CandidatesPageClient({
         </>
       }
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 pt-0">
+      <div
+        className={cn(
+          "flex flex-col gap-4 p-4 pt-0",
+          boardFillsViewport && "min-h-0 flex-1",
+        )}
+      >
         {!organizationId ? (
           <p className="text-sm text-muted-foreground">
             You are not a member of an organization yet. Join or create one to
