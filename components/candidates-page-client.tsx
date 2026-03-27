@@ -209,6 +209,21 @@ export function CandidatesPageClient({
     }
   });
 
+  const viewToggleHotkeyEnabled =
+    organizationId != null &&
+    organizationId.length > 0 &&
+    rows.length > 0 &&
+    !detailOpen;
+
+  /** ⌘⇧V on macOS; Ctrl+⇧V elsewhere (`Mod` = Meta on Mac, Control on Win/Linux). */
+  useHotkey(
+    "Mod+Shift+V",
+    () => {
+      void setCandidatesView(candidatesView === "list" ? "board" : "list");
+    },
+    { enabled: viewToggleHotkeyEnabled },
+  );
+
   const afterUpload = (id: string) => {
     void setCandidateId(id);
   };

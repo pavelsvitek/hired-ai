@@ -337,11 +337,6 @@ export function CandidatesKanbanBoard({
 
   return (
     <div className="flex min-h-0 max-h-full flex-1 flex-col gap-3 overflow-hidden">
-      <p className="shrink-0 text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">Keyboard:</span> focus a
-        card, press Enter or Space to open detail, then use stage controls
-        there.
-      </p>
       {mutation.error instanceof Error ? (
         <p id={errorId} className="shrink-0 text-sm text-destructive" role="alert">
           {mutation.error.message}
