@@ -146,7 +146,7 @@ function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex h-full max-h-full min-h-0 min-w-[260px] max-w-[320px] flex-col rounded-xl border bg-muted/30",
+        "flex h-full max-h-full min-h-0 min-w-[260px] flex-1 flex-col rounded-xl border bg-muted/30",
         isOver && "bg-primary/5 ring-2 ring-primary/30",
       )}
     >
@@ -355,7 +355,7 @@ export function CandidatesKanbanBoard({
         onDragEnd={onDragEnd}
       >
         <div
-          className="flex h-full max-h-full min-h-0 flex-1 items-stretch gap-3 overflow-x-auto overflow-y-hidden pb-2"
+          className="flex h-full max-h-full min-h-0 w-full min-w-0 flex-1 items-stretch gap-3 overflow-x-auto overflow-y-hidden pb-2"
           aria-label="Candidates by pipeline stage"
         >
           {stages.map((stage) => (
