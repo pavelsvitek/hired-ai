@@ -20,7 +20,7 @@ export function DashboardShell({
   children: ReactNode;
 }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-dvh max-h-dvh min-h-0 overflow-hidden">
       <AppSidebar organizationId={organizationId} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2">
@@ -38,7 +38,9 @@ export function DashboardShell({
             ) : null}
           </div>
         </header>
-        {children}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -324,32 +324,36 @@ export function CandidatesPageClient({
 
   const listAndDetail =
     organizationId && rows.length > 0 ? (
-      <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="relative isolate min-h-0 flex-1">
         <Activity mode={detailOpen ? "hidden" : "visible"} name="candidates-list">
-          {listOrBoard}
+          <div className="absolute inset-0 flex min-h-0 flex-col overflow-hidden">
+            {listOrBoard}
+          </div>
         </Activity>
         <Activity mode={detailOpen ? "visible" : "hidden"} name="candidate-detail">
-          {detailPayload ? (
-            <CandidateDetailBody
-              organizationId={organizationId}
-              origin={origin}
-              detailPayload={detailPayload}
-              reparseBusy={reparseMutation.isPending}
-              reparseError={
-                reparseMutation.error instanceof Error
-                  ? reparseMutation.error.message
-                  : reparseMutation.error
-                    ? "Could not parse CV"
-                    : null
-              }
-              onReparse={() => {
-                reparseMutation.reset();
-                reparseMutation.mutate({
-                  candidateId: detailPayload.candidateId,
-                });
-              }}
-            />
-          ) : null}
+          <div className="absolute inset-0 flex min-h-0 flex-col overflow-hidden">
+            {detailPayload ? (
+              <CandidateDetailBody
+                organizationId={organizationId}
+                origin={origin}
+                detailPayload={detailPayload}
+                reparseBusy={reparseMutation.isPending}
+                reparseError={
+                  reparseMutation.error instanceof Error
+                    ? reparseMutation.error.message
+                    : reparseMutation.error
+                      ? "Could not parse CV"
+                      : null
+                }
+                onReparse={() => {
+                  reparseMutation.reset();
+                  reparseMutation.mutate({
+                    candidateId: detailPayload.candidateId,
+                  });
+                }}
+              />
+            ) : null}
+          </div>
         </Activity>
       </div>
     ) : null;
@@ -429,7 +433,7 @@ export function CandidatesPageClient({
         </>
       }
     >
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 pt-0">
         {!organizationId ? (
           <p className="text-sm text-muted-foreground">
             You are not a member of an organization yet. Join or create one to

@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { FilesIcon, UploadCloudIcon } from "lucide-react";
+import Link from "next/link";
 
 import { CvBulkUploadDialog } from "@/components/cv-bulk-upload-dialog";
 import { CvUploadDialog } from "@/components/cv-upload-dialog";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,6 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import { requireUserAndOrg } from "@/lib/dashboard-org";
 
 export default async function Page() {

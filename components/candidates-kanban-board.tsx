@@ -8,13 +8,13 @@ import {
   type DragStartEvent,
   PointerSensor,
   closestCorners,
-  useDroppable,
   useDraggable,
+  useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { useEffect, useId, useRef, useState, type MutableRefObject } from "react";
+import { type MutableRefObject, useEffect, useId, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -146,7 +146,7 @@ function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex max-h-[min(70dvh,720px)] min-w-[260px] max-w-[320px] flex-col rounded-xl border bg-muted/30",
+        "flex h-full max-h-full min-h-0 min-w-[260px] max-w-[320px] flex-col rounded-xl border bg-muted/30",
         isOver && "bg-primary/5 ring-2 ring-primary/30",
       )}
     >
@@ -312,7 +312,7 @@ export function CandidatesKanbanBoard({
       candidateId != null &&
       targetStageId != null &&
       rows.find((r) => r.id === candidateId)?.recruitment.stage.id !==
-        targetStageId;
+      targetStageId;
 
     // Both state updates are in the same component → always the same render.
     // pendingMove keeps the card in the target column while the parent's rows
@@ -336,14 +336,14 @@ export function CandidatesKanbanBoard({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <p className="text-xs text-muted-foreground">
+    <div className="flex min-h-0 max-h-full flex-1 flex-col gap-3 overflow-hidden">
+      <p className="shrink-0 text-xs text-muted-foreground">
         <span className="font-medium text-foreground">Keyboard:</span> focus a
         card, press Enter or Space to open detail, then use stage controls
         there.
       </p>
       {mutation.error instanceof Error ? (
-        <p id={errorId} className="text-sm text-destructive" role="alert">
+        <p id={errorId} className="shrink-0 text-sm text-destructive" role="alert">
           {mutation.error.message}
         </p>
       ) : null}
@@ -355,7 +355,7 @@ export function CandidatesKanbanBoard({
         onDragEnd={onDragEnd}
       >
         <div
-          className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-2"
+          className="flex h-full max-h-full min-h-0 flex-1 items-stretch gap-3 overflow-x-auto overflow-y-hidden pb-2"
           aria-label="Candidates by pipeline stage"
         >
           {stages.map((stage) => (
@@ -385,7 +385,7 @@ export function CandidatesKanbanBoard({
 function viewToggleButtonClass(active: boolean) {
   return cn(
     active &&
-      "z-10 border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
+    "z-10 border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
   );
 }
 

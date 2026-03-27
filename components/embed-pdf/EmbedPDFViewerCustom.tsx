@@ -926,7 +926,12 @@ export function EmbedPDFPersistentProvider({
   return (
     <EmbedPdfEngineReadyContext.Provider value={ready}>
       {ready ? (
-        <EmbedPDF engine={engine} plugins={plugins}>
+        <EmbedPDF
+          engine={engine}
+          plugins={plugins}
+          // AutoMount adds full-width plugin nodes as siblings of layout children and breaks flex height.
+          autoMountDomElements={false}
+        >
           {children}
         </EmbedPDF>
       ) : (
