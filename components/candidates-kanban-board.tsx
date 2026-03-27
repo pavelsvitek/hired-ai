@@ -382,6 +382,13 @@ export function CandidatesKanbanBoard({
   );
 }
 
+function viewToggleButtonClass(active: boolean) {
+  return cn(
+    active &&
+      "z-10 border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
+  );
+}
+
 export function CandidatesViewToggle({
   view,
   onViewChange,
@@ -394,7 +401,8 @@ export function CandidatesViewToggle({
       <Button
         type="button"
         size="sm"
-        variant={view === "list" ? "default" : "outline"}
+        variant="outline"
+        className={viewToggleButtonClass(view === "list")}
         onClick={() => onViewChange("list")}
       >
         List
@@ -402,7 +410,8 @@ export function CandidatesViewToggle({
       <Button
         type="button"
         size="sm"
-        variant={view === "board" ? "default" : "outline"}
+        variant="outline"
+        className={viewToggleButtonClass(view === "board")}
         onClick={() => onViewChange("board")}
       >
         Board
