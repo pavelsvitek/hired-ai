@@ -1,8 +1,10 @@
 import { relations, type InferSelectModel } from "drizzle-orm";
 import {
   boolean,
+  doublePrecision,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -54,13 +56,50 @@ export const job = pgTable(
       .notNull()
       .references(() => pipeline.id, { onDelete: "restrict" }),
     isDefault: boolean("is_default").notNull().default(false),
+
+    summary: text("summary"),
+    /** Rich text / editor document (e.g. TipTap JSON). */
+    description: jsonb("description").$type<unknown>(),
+
+    employmentType: text("employment_type"),
+    seniority: text("seniority"),
+    department: text("department"),
+
+    workplaceType: text("workplace_type"),
+    locationLabel: text("location_label"),
+    addressLine1: text("address_line_1"),
+    addressLine2: text("address_line_2"),
+    locality: text("locality"),
+    adminArea: text("admin_area"),
+    postalCode: text("postal_code"),
+    countryCode: text("country_code"),
+    latitude: doublePrecision("latitude"),
+    longitude: doublePrecision("longitude"),
+
+    /** whole units in `salaryCurrency` (e.g. USD dollars, not cents) */
+    compensationVisibility: text("compensation_visibility"),
+    salaryMin: integer("salary_min"),
+    salaryMax: integer("salary_max"),
+    salaryCurrency: text("salary_currency"),
+    payPeriod: text("pay_period"),
+
+    status: text("status").notNull().default("draft"),
+    publishedAt: timestamp("published_at", { mode: "date" }),
+    closedAt: timestamp("closed_at", { mode: "date" }),
+    /** Globally unique public URL segment when set. */
+    externalSlug: text("external_slug"),
+
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index("job_organization_id_idx").on(table.organizationId)],
+  (table) => [
+    index("job_organization_id_idx").on(table.organizationId),
+    index("job_organization_status_idx").on(table.organizationId, table.status),
+    uniqueIndex("job_external_slug_uidx").on(table.externalSlug),
+  ],
 );
 
 export const candidateApplication = pgTable(

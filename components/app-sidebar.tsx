@@ -17,6 +17,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import {
+  BriefcaseIcon,
   LayoutDashboardIcon,
   LifeBuoyIcon,
   MoonIcon,
@@ -24,7 +25,7 @@ import {
   Settings2Icon,
   SunIcon,
   TerminalIcon,
-  UsersIcon
+  UsersIcon,
 } from "lucide-react"
 
 function SidebarThemeToggle() {
@@ -80,6 +81,12 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: <LayoutDashboardIcon />,
+      isActive: false,
+    },
+    {
+      title: "Jobs",
+      url: "/dashboard/jobs",
+      icon: <BriefcaseIcon />,
       isActive: false,
     },
     {
