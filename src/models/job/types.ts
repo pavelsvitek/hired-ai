@@ -16,10 +16,26 @@ export type JobListRow = Pick<
   | "updatedAt"
 > & {
   pipelineName: string;
+  organizationSlug: string;
 };
 
 export type JobsListResponse = {
   jobs: JobListRow[];
+};
+
+export type JobDetail = JobListRow &
+  Pick<
+    JobRowSelect,
+    | "summary"
+    | "salaryMin"
+    | "salaryMax"
+    | "salaryCurrency"
+    | "payPeriod"
+    | "publishedAt"
+  >;
+
+export type JobDetailResponse = {
+  job: JobDetail;
 };
 
 /** Body for `POST /api/jobs` (JSON). */

@@ -6,15 +6,29 @@ import {
   job,
   pipelineStage,
 } from "@/db/schema";
-import { DEFAULT_PIPELINE_ID } from "@/lib/recruiting/constants";
 import { backfillMissingApplicationsForOrg } from "@/lib/recruiting/backfill-applications";
 import type { CandidateListRow } from "@/models/candidate/types";
 import { db } from "@/lib/db";
 
 export async function loadCandidatesForDashboard(
   organizationId: string,
+  jobId: string,
 ): Promise<CandidateListRow[]> {
   await backfillMissingApplicationsForOrg(organizationId);
+
+  const [jobRow] = await db
+    .select({
+      id: job.id,
+      title: job.title,
+      pipelineId: job.pipelineId,
+    })
+    .from(job)
+    .where(and(eq(job.id, jobId), eq(job.organizationId, organizationId)))
+    .limit(1);
+
+  if (!jobRow) {
+    return [];
+  }
 
   const stages = await db
     .select({
@@ -23,7 +37,7 @@ export async function loadCandidatesForDashboard(
       sortOrder: pipelineStage.sortOrder,
     })
     .from(pipelineStage)
-    .where(eq(pipelineStage.pipelineId, DEFAULT_PIPELINE_ID))
+    .where(eq(pipelineStage.pipelineId, jobRow.pipelineId))
     .orderBy(asc(pipelineStage.sortOrder));
 
   const stageBriefs = stages.map((s) => ({
@@ -43,17 +57,17 @@ export async function loadCandidatesForDashboard(
     })
     .from(candidate)
     .innerJoin(
-      job,
-      and(
-        eq(job.organizationId, candidate.organizationId),
-        eq(job.isDefault, true),
-      ),
-    )
-    .innerJoin(
       candidateApplication,
       and(
         eq(candidateApplication.candidateId, candidate.id),
-        eq(candidateApplication.jobId, job.id),
+        eq(candidateApplication.jobId, jobId),
+      ),
+    )
+    .innerJoin(
+      job,
+      and(
+        eq(job.id, jobId),
+        eq(job.organizationId, candidate.organizationId),
       ),
     )
     .innerJoin(

@@ -50,6 +50,11 @@ export type CandidatesPageClientProps = {
   organizationId: string | null;
   rows: CandidateListRow[];
   origin: string;
+  /** Organization default job; used when `jobId` query param is absent. */
+  defaultJobId: string;
+  /** Job id used to populate `rows` on the server (URL override or default). */
+  serverJobId: string;
+  jobChoices: { id: string; title: string }[];
 };
 
 function listTitle(r: CandidateListRow) {
@@ -61,6 +66,13 @@ function listTitle(r: CandidateListRow) {
   );
 }
 
+const JOB_ID_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isJobIdParam(value: string | null | undefined): value is string {
+  return typeof value === "string" && JOB_ID_UUID_RE.test(value);
+}
+
 function CandidateDetailBody({
   organizationId,
   origin,
@@ -68,6 +80,7 @@ function CandidateDetailBody({
   reparseBusy,
   reparseError,
   onReparse,
+  jobId,
 }: {
   organizationId: string | null;
   origin: string;
@@ -75,6 +88,7 @@ function CandidateDetailBody({
   reparseBusy: boolean;
   reparseError: string | null;
   onReparse: () => void;
+  jobId: string | null;
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 pb-4 pl-0 pr-4 pt-0 lg:flex-row">
@@ -135,6 +149,7 @@ function CandidateDetailBody({
             organizationId={organizationId}
             candidateId={detailPayload.candidateId}
             recruitment={detailPayload.row.recruitment}
+            jobId={jobId}
           />
         </div>
         <CandidateProfilePanel row={detailPayload.row} />
@@ -147,16 +162,28 @@ export function CandidatesPageClient({
   organizationId,
   rows: initialRows,
   origin,
+  defaultJobId,
+  serverJobId,
+  jobChoices,
 }: CandidatesPageClientProps) {
+  const [jobIdParam, setJobIdParam] = useQueryState("jobId", parseAsString);
+  const jobId =
+    isJobIdParam(jobIdParam) && jobChoices.some((j) => j.id === jobIdParam)
+      ? jobIdParam
+      : defaultJobId;
+
   const listQuery = useCandidatesList(organizationId, {
-    initialData: initialRows,
+    jobId: jobId.length > 0 ? jobId : null,
+    initialData: jobId === serverJobId ? initialRows : undefined,
   });
   const rows = useMemo(
     () =>
-      organizationId != null && organizationId.length > 0
-        ? (listQuery.data ?? initialRows)
+      organizationId != null &&
+      organizationId.length > 0 &&
+      jobId.length > 0
+        ? (listQuery.data ?? (jobId === serverJobId ? initialRows : []))
         : [],
-    [organizationId, listQuery.data, initialRows],
+    [organizationId, listQuery.data, initialRows, jobId, serverJobId],
   );
 
   const reparseMutation = useReparseCandidateMutation(organizationId);
@@ -198,6 +225,18 @@ export function CandidatesPageClient({
       void setCandidateId(null);
     }
   }, [candidateId, selectedRow, setCandidateId]);
+
+  const prevJobIdRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (prevJobIdRef.current === undefined) {
+      prevJobIdRef.current = jobId;
+      return;
+    }
+    if (prevJobIdRef.current !== jobId) {
+      prevJobIdRef.current = jobId;
+      void setCandidateId(null);
+    }
+  }, [jobId, setCandidateId]);
 
   const clearCandidate = () => {
     void setCandidateId(null);
@@ -329,6 +368,7 @@ export function CandidatesPageClient({
   const boardSection = (
     <CandidatesKanbanBoard
       organizationId={organizationId}
+      jobId={jobId.length > 0 ? jobId : null}
       rows={rows}
       selectedCandidateId={candidateId}
       onOpenCandidate={(id) => void setCandidateId(id)}
@@ -358,6 +398,7 @@ export function CandidatesPageClient({
               ? "Could not parse CV"
               : null
         }
+        jobId={jobId.length > 0 ? jobId : null}
         onReparse={() => {
           reparseMutation.reset();
           reparseMutation.mutate({
@@ -431,6 +472,26 @@ export function CandidatesPageClient({
       }
       headerAction={
         <>
+          {!detailOpen && organizationId && jobChoices.length > 0 ? (
+            <label className="flex items-center gap-2 text-sm">
+              <span className="shrink-0 text-muted-foreground">Job</span>
+              <select
+                className="h-8 max-w-[14rem] rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={jobId}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  void setJobIdParam(v === defaultJobId ? null : v);
+                }}
+                aria-label="Filter candidates by job"
+              >
+                {jobChoices.map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {j.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           {candidateId && selectedRow ? (
             <Button variant="outline" size="sm" onClick={clearCandidate}>
               <ArrowLeftIcon data-icon="inline-start" />

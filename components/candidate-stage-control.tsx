@@ -18,12 +18,14 @@ export function CandidateStageControl({
   organizationId,
   candidateId,
   recruitment,
+  jobId,
 }: {
   organizationId: string | null;
   candidateId: string;
   recruitment: RecruitmentSummary;
+  jobId: string | null;
 }) {
-  const mutation = useUpdateCandidateStageMutation(organizationId);
+  const mutation = useUpdateCandidateStageMutation(organizationId, jobId);
   const busy = mutation.isPending;
   const { stage, stages } = recruitment;
   const nextStage = stages.find((s) => s.sortOrder === stage.sortOrder + 1);

@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { handle } from "hono/vercel";
 import { z } from "zod";
 
@@ -12,8 +12,13 @@ import { DEFAULT_PIPELINE_ID } from "@/lib/recruiting/constants";
 import { ensureDefaultPipeline } from "@/lib/recruiting/ensure-defaults";
 import { PAY_PERIODS } from "@/lib/recruiting/pay-periods";
 import { WORKPLACE_TYPES } from "@/lib/recruiting/workplace-types";
+import { loadJobForDashboard } from "@/lib/recruiting/load-job-for-dashboard";
 import { loadJobsForDashboard } from "@/lib/recruiting/load-jobs-dashboard";
-import type { CreateJobResponse, JobsListResponse } from "@/models/job/types";
+import type {
+  CreateJobResponse,
+  JobDetailResponse,
+  JobsListResponse,
+} from "@/models/job/types";
 
 export const runtime = "nodejs";
 
@@ -59,6 +64,14 @@ const createJobJsonSchema = z.object({
       "Salary minimum must be less than or equal to salary maximum.",
     path: ["salaryMin"],
   },
+).refine(
+  (data) =>
+    data.status !== "published" ||
+    (data.externalSlug != null && data.externalSlug.length > 0),
+  {
+    message: "Published jobs require a public slug for the careers page URL.",
+    path: ["externalSlug"],
+  },
 );
 
 const app = createHonoWithAuth("/api/jobs");
@@ -81,6 +94,110 @@ app.get("/", async (c) => {
 
   return c.json({ jobs } satisfies JobsListResponse);
 });
+
+const jobIdParam = z.object({
+  id: z.string().uuid(),
+});
+
+app.get("/:id", zValidator("param", jobIdParam), async (c) => {
+  const userId = c.var.userId;
+  const jobId = c.req.valid("param").id;
+
+  const memberships = await db
+    .select({ organizationId: member.organizationId })
+    .from(member)
+    .where(eq(member.userId, userId));
+
+  const organizationId = memberships[0]?.organizationId ?? null;
+
+  if (!organizationId) {
+    return c.json({ error: "No organization membership" }, 400);
+  }
+
+  const jobRow = await loadJobForDashboard(organizationId, jobId);
+
+  if (!jobRow) {
+    return c.json({ error: "Job not found" }, 404);
+  }
+
+  return c.json({ job: jobRow } satisfies JobDetailResponse);
+});
+
+const patchJobStatusSchema = z.object({
+  status: z.enum(["draft", "published"]),
+});
+
+app.patch(
+  "/:id",
+  zValidator("param", jobIdParam),
+  zValidator("json", patchJobStatusSchema),
+  async (c) => {
+    const userId = c.var.userId;
+    const jobId = c.req.valid("param").id;
+    const { status } = c.req.valid("json");
+
+    const memberships = await db
+      .select({ organizationId: member.organizationId })
+      .from(member)
+      .where(eq(member.userId, userId));
+
+    const organizationId = memberships[0]?.organizationId ?? null;
+
+    if (!organizationId) {
+      return c.json({ error: "No organization membership" }, 400);
+    }
+
+    const [existing] = await db
+      .select({
+        externalSlug: job.externalSlug,
+        publishedAt: job.publishedAt,
+      })
+      .from(job)
+      .where(and(eq(job.id, jobId), eq(job.organizationId, organizationId)))
+      .limit(1);
+
+    if (!existing) {
+      return c.json({ error: "Job not found" }, 404);
+    }
+
+    if (
+      status === "published" &&
+      (existing.externalSlug == null || existing.externalSlug.trim() === "")
+    ) {
+      return c.json(
+        {
+          error:
+            "Set a public slug for this job before publishing (e.g. on the jobs list or when editing).",
+        },
+        400,
+      );
+    }
+
+    const now = new Date();
+    const publishedAt =
+      status === "published"
+        ? (existing.publishedAt ?? now)
+        : null;
+
+    try {
+      await db
+        .update(job)
+        .set({
+          status,
+          publishedAt,
+          updatedAt: now,
+        })
+        .where(and(eq(job.id, jobId), eq(job.organizationId, organizationId)));
+    } catch (err) {
+      return c.json(
+        { error: `Could not update job: ${errorMessage(err)}` },
+        500,
+      );
+    }
+
+    return c.json({ ok: true as const });
+  },
+);
 
 app.post("/", zValidator("json", createJobJsonSchema), async (c) => {
   const userId = c.var.userId;
@@ -124,6 +241,7 @@ app.post("/", zValidator("json", createJobJsonSchema), async (c) => {
 
   const id = randomUUID();
   const now = new Date();
+  const status = body.status ?? "draft";
 
   try {
     await db.insert(job).values({
@@ -134,7 +252,8 @@ app.post("/", zValidator("json", createJobJsonSchema), async (c) => {
       isDefault: false,
       summary: body.summary ?? null,
       externalSlug: body.externalSlug ?? null,
-      status: body.status ?? "draft",
+      status,
+      publishedAt: status === "published" ? now : null,
       workplaceType: body.workplaceType,
       locationLabel: body.locationLabel ?? null,
       employmentType: body.employmentType ?? null,
@@ -157,3 +276,4 @@ app.post("/", zValidator("json", createJobJsonSchema), async (c) => {
 
 export const GET = handle(app);
 export const POST = handle(app);
+export const PATCH = handle(app);

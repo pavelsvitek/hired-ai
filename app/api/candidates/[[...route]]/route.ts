@@ -16,9 +16,17 @@ import {
   mapExtractionToCandidateInsert,
   mapExtractionToCandidateUpdate,
 } from "@/lib/cv-extraction/map-to-candidate-row";
+import {
+  isAcceptablePdfFile,
+  isPdfBuffer,
+} from "@/lib/cv-upload/validate-pdf";
 import { readCvPdfFile, storeCvPdf } from "@/lib/cv-storage";
 import { db } from "@/lib/db";
 import { createHonoWithAuth } from "@/lib/hono/create-hono-with-auth";
+import {
+  getDefaultJobIdForOrganization,
+  jobBelongsToOrganization,
+} from "@/lib/recruiting/get-default-job-id-for-org";
 import { ensureDefaultApplicationForCandidate } from "@/lib/recruiting/ensure-defaults";
 import { loadCandidatesForDashboard } from "@/lib/recruiting/load-candidates-dashboard";
 import type { CandidatesListResponse } from "@/models/candidate/types";
@@ -28,10 +36,6 @@ export const runtime = "nodejs";
 const idParam = z.object({
   id: z.string().uuid(),
 });
-
-function isPdfBuffer(buf: Buffer): boolean {
-  return buf.length >= 4 && buf.subarray(0, 4).toString("ascii") === "%PDF";
-}
 
 function errorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
@@ -54,7 +58,20 @@ app.get("/", async (c) => {
     return c.json({ candidates: [] satisfies CandidatesListResponse["candidates"] });
   }
 
-  const candidates = await loadCandidatesForDashboard(organizationId);
+  const defaultJobId = await getDefaultJobIdForOrganization(organizationId);
+  const jobIdParam = c.req.query("jobId");
+  let jobId = defaultJobId;
+  if (jobIdParam) {
+    const parsed = z.string().uuid().safeParse(jobIdParam);
+    if (parsed.success) {
+      const ok = await jobBelongsToOrganization(parsed.data, organizationId);
+      if (ok) {
+        jobId = parsed.data;
+      }
+    }
+  }
+
+  const candidates = await loadCandidatesForDashboard(organizationId, jobId);
 
   return c.json({ candidates } satisfies CandidatesListResponse);
 });
@@ -79,10 +96,7 @@ app.post("/upload", async (c) => {
     return c.json({ error: "file is required" }, 400);
   }
 
-  if (
-    file.type !== "application/pdf" &&
-    !file.name.toLowerCase().endsWith(".pdf")
-  ) {
+  if (!isAcceptablePdfFile(file)) {
     return c.json({ error: "Only PDF files are accepted" }, 400);
   }
 
@@ -157,6 +171,7 @@ app.post("/upload", async (c) => {
 
 const stagePatchSchema = z.object({
   pipelineStageId: z.string().uuid(),
+  jobId: z.string().uuid(),
 });
 
 app.patch(
@@ -166,7 +181,7 @@ app.patch(
   async (c) => {
     const userId = c.var.userId;
     const candidateId = c.req.valid("param").id;
-    const { pipelineStageId } = c.req.valid("json");
+    const { pipelineStageId, jobId: jobIdBody } = c.req.valid("json");
 
     const [cand] = await db
       .select({
@@ -203,14 +218,14 @@ app.patch(
       .from(job)
       .where(
         and(
+          eq(job.id, jobIdBody),
           eq(job.organizationId, cand.organizationId),
-          eq(job.isDefault, true),
         ),
       )
       .limit(1);
 
     if (!jobRow) {
-      return c.json({ error: "No default job for organization" }, 409);
+      return c.json({ error: "Job not found" }, 404);
     }
 
     const [stageRow] = await db
@@ -240,7 +255,7 @@ app.patch(
       .where(
         and(
           eq(candidateApplication.candidateId, candidateId),
-          eq(candidateApplication.jobId, jobRow.id),
+          eq(candidateApplication.jobId, jobIdBody),
         ),
       )
       .returning({ id: candidateApplication.id });

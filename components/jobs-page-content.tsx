@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { CopyCareersLinkButton } from "@/components/copy-careers-link-button";
 import { cn } from "@/lib/utils";
 import { formatWorkplaceLabel } from "@/lib/recruiting/workplace-types";
 import type { JobListRow } from "@/models/job/types";
@@ -17,9 +20,11 @@ function formatUpdatedAt(d: Date): string {
 export function JobsPageContent({
   organizationId,
   jobs,
+  origin,
 }: {
   organizationId: string | null;
   jobs: JobListRow[];
+  origin: string;
 }) {
   if (!organizationId) {
     return (
@@ -55,6 +60,7 @@ export function JobsPageContent({
             <th className="px-4 py-3 font-medium">Location</th>
             <th className="px-4 py-3 font-medium">Employment</th>
             <th className="px-4 py-3 font-medium">Slug</th>
+            <th className="px-4 py-3 font-medium">Careers</th>
             <th className="px-4 py-3 font-medium">Updated</th>
           </tr>
         </thead>
@@ -65,7 +71,12 @@ export function JobsPageContent({
               className="border-b border-border/60 last:border-b-0"
             >
               <td className="px-4 py-3">
-                <span className="font-medium text-foreground">{row.title}</span>
+                <Link
+                  href={`/dashboard/jobs/${row.id}`}
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  {row.title}
+                </Link>
                 {row.isDefault ? (
                   <span
                     className={cn(
@@ -87,6 +98,15 @@ export function JobsPageContent({
               <td className="px-4 py-3">{formatCell(row.employmentType)}</td>
               <td className="max-w-[10rem] truncate px-4 py-3 text-muted-foreground">
                 {formatCell(row.externalSlug)}
+              </td>
+              <td className="px-4 py-3">
+                {row.status === "published" && row.externalSlug ? (
+                  <CopyCareersLinkButton
+                    url={`${origin}/o/${row.organizationSlug}/careers/${row.externalSlug}`}
+                  />
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
               </td>
               <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                 {formatUpdatedAt(row.updatedAt)}
