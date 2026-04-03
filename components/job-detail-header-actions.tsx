@@ -66,7 +66,7 @@ export function JobDetailHeaderActions({
           </Button>
         ) : (
           <ButtonGroup
-            aria-label="Careers link and job listing actions"
+            aria-label="Share link and job listing actions"
             className="max-w-full min-w-0 self-end"
           >
             <CopyCareersLinkButton

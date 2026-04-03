@@ -3,6 +3,7 @@
 import { useTheme } from "next-themes"
 import * as React from "react"
 
+import { NavJobs } from "@/components/nav-jobs"
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavSecondary } from "@/components/nav-secondary"
@@ -17,7 +18,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import {
-  BriefcaseIcon,
   LayoutDashboardIcon,
   LifeBuoyIcon,
   MoonIcon,
@@ -81,12 +81,6 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: <LayoutDashboardIcon />,
-      isActive: false,
-    },
-    {
-      title: "Jobs",
-      url: "/dashboard/jobs",
-      icon: <BriefcaseIcon />,
       isActive: false,
     },
     {
@@ -168,6 +162,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        <NavJobs organizationId={organizationId} />
         <NavProjects
           projects={[
             {

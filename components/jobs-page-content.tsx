@@ -50,7 +50,7 @@ export function JobsPageContent({
 
   return (
     <div className="overflow-x-auto rounded-xl border">
-      <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
+      <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
         <thead>
           <tr className="border-b bg-muted/50">
             <th className="px-4 py-3 font-medium">Title</th>
@@ -59,8 +59,7 @@ export function JobsPageContent({
             <th className="px-4 py-3 font-medium">Workplace</th>
             <th className="px-4 py-3 font-medium">Location</th>
             <th className="px-4 py-3 font-medium">Employment</th>
-            <th className="px-4 py-3 font-medium">Slug</th>
-            <th className="px-4 py-3 font-medium">Careers</th>
+            <th className="px-4 py-3 font-medium">Share</th>
             <th className="px-4 py-3 font-medium">Updated</th>
           </tr>
         </thead>
@@ -96,9 +95,6 @@ export function JobsPageContent({
               </td>
               <td className="px-4 py-3">{formatCell(row.locationLabel)}</td>
               <td className="px-4 py-3">{formatCell(row.employmentType)}</td>
-              <td className="max-w-[10rem] truncate px-4 py-3 text-muted-foreground">
-                {formatCell(row.externalSlug)}
-              </td>
               <td className="px-4 py-3">
                 {row.status === "published" && row.externalSlug ? (
                   <CopyCareersLinkButton

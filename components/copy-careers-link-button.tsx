@@ -10,7 +10,7 @@ type ButtonProps = React.ComponentProps<typeof Button>;
 
 export function CopyCareersLinkButton({
   url,
-  label = "Copy careers link",
+  label = "Share",
   variant = "outline",
   size = "sm",
   className,

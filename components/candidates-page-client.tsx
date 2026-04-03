@@ -190,7 +190,7 @@ export function CandidatesPageClient({
 
   const [candidatesView, setCandidatesView] = useQueryState(
     "view",
-    parseAsStringLiteral(["list", "board"]).withDefault("list"),
+    parseAsStringLiteral(["list", "board"]).withDefault("board"),
   );
 
   const [candidateId, setCandidateId] = useQueryState(
