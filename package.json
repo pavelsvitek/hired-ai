@@ -58,6 +58,7 @@
   "devDependencies": {
     "@better-auth/cli": "^1.4.21",
     "@tailwindcss/postcss": "^4",
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",

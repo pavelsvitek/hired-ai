@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { CurrencyCombobox } from "@/components/currency-combobox";
+import { GooglePlacesLocationInput } from "@/components/google-places-location-input";
 import { PayPeriodCombobox } from "@/components/pay-period-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -199,11 +200,11 @@ export function JobCreateForm({
           <label htmlFor="job-location" className="text-sm font-medium">
             Location
           </label>
-          <Input
+          <GooglePlacesLocationInput
             id="job-location"
             value={locationLabel}
-            onChange={(e) => setLocationLabel(e.target.value)}
-            placeholder="San Francisco Bay Area"
+            onValueChange={setLocationLabel}
+            placeholder="Start typing an address or city"
             maxLength={300}
           />
         </div>
