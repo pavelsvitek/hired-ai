@@ -30,15 +30,17 @@ Push to remote and create a draft pull request.
 
 https://linear.app/pavelsvitekcom/issue/PAV-XX
 
+Replace `PAV-XX` with the real issue id (e.g. `PAV-38`).
+
 ## Rules
 
 - PR title must start with one of: `Feature:`, `Bug:`, `Task:`, or `Ops:`
-- PR title must include the full ticket number in this format: `MAI-68`
-- PR title format must be: `<Type>: <Ticket> - <succinct title>`
-- Example PR title: `Feature: MAI-68 - Instant project creation`
-- Extract the ticket number from the current branch name when possible (example: `feature/MAI-68-instant-project-creation`)
-- If the branch name does not contain a ticket number, ask the user for the ticket number before creating the PR
-- Include the Linear link in the PR body using this fixed base URL plus the extracted ticket number: `https://themandai.atlassian.net/browse/MAI-68`
+- PR title must include the full Linear issue id in the form `PAV-38` (see team **pavelsvitek**, key `PAV`)
+- PR title format: `<Type>: PAV-XX - <succinct title>`
+- Example: `Feature: PAV-38 - Public job listing and apply flow`
+- Extract `PAV-123` (or a `pav-123` segment) from the current branch name when present (examples: `feature/PAV-38-public-job-listing`, `feature/pav-38-short-slug`)
+- If the branch has no ticket id, **ask the user once** for the `PAV-` issue (or have them run the **create-ticket** project skill in `.cursor/skills/create-ticket` to add an issue in the **hired.ai** Linear project, then use that id)
+- The **## Linear** link in the body must be `https://linear.app/pavelsvitekcom/issue/PAV-XX` with the same id as in the title
 - Do NOT include a summary of code changes or files modified
 - Do NOT include a test plan with checkboxes
 - Do NOT include "Generated with Claude Code" or similar footers

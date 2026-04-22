@@ -178,11 +178,13 @@ function KanbanColumn({
 
 export function CandidatesKanbanBoard({
   organizationId,
+  jobId,
   rows,
   selectedCandidateId,
   onOpenCandidate,
 }: {
   organizationId: string | null;
+  jobId: string | null;
   rows: CandidateListRow[];
   selectedCandidateId: string | null;
   onOpenCandidate: (candidateId: string) => void;
@@ -204,7 +206,7 @@ export function CandidatesKanbanBoard({
     targetStageId: string;
   } | null>(null);
 
-  const mutation = useUpdateCandidateStageMutation(organizationId);
+  const mutation = useUpdateCandidateStageMutation(organizationId, jobId);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },

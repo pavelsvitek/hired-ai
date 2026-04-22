@@ -9,12 +9,13 @@ import type {
 
 export const candidateKeys = {
   all: ["candidates"] as const,
-  list: (organizationId: string | null) =>
-    [...candidateKeys.all, "list", organizationId] as const,
+  list: (organizationId: string | null, jobId: string | null) =>
+    [...candidateKeys.all, "list", organizationId, jobId] as const,
 };
 
-async function fetchCandidatesList(): Promise<CandidateListRow[]> {
-  const res = await fetch("/api/candidates", {
+async function fetchCandidatesList(jobId: string): Promise<CandidateListRow[]> {
+  const params = new URLSearchParams({ jobId });
+  const res = await fetch(`/api/candidates?${params.toString()}`, {
     credentials: "include",
     cache: "no-store",
   });
@@ -35,20 +36,29 @@ async function fetchCandidatesList(): Promise<CandidateListRow[]> {
 
 export type UseCandidatesListOptions = {
   initialData?: CandidateListRow[];
+  /** When omitted, list query is disabled. */
+  jobId: string | null;
 };
 
 export function useCandidatesList(
   organizationId: string | null,
-  options: UseCandidatesListOptions = {},
+  options: UseCandidatesListOptions,
 ) {
-  const { initialData } = options;
+  const { initialData, jobId } = options;
 
   return useQuery({
-    queryKey: candidateKeys.list(organizationId),
-    queryFn: fetchCandidatesList,
-    enabled: organizationId != null && organizationId.length > 0,
+    queryKey: candidateKeys.list(organizationId, jobId),
+    queryFn: () => fetchCandidatesList(jobId!),
+    enabled:
+      organizationId != null &&
+      organizationId.length > 0 &&
+      jobId != null &&
+      jobId.length > 0,
     initialData:
-      organizationId != null && organizationId.length > 0
+      organizationId != null &&
+      organizationId.length > 0 &&
+      jobId != null &&
+      jobId.length > 0
         ? initialData
         : undefined,
     /** SSR payload is not the source of truth after mutations; always refetch when invalidated. */

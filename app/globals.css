@@ -211,3 +211,8 @@
     @apply font-sans;
   }
 }
+
+/* Google Places Autocomplete suggestion list (portals to body) */
+.pac-container {
+  z-index: 10000;
+}

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { CurrencyCombobox } from "@/components/currency-combobox";
+import { GooglePlacesLocationInput } from "@/components/google-places-location-input";
 import { PayPeriodCombobox } from "@/components/pay-period-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,18 +64,30 @@ export function JobCreateForm({
   const [salaryRangeError, setSalaryRangeError] = React.useState<string | null>(
     null,
   );
+  const [status, setStatus] = React.useState<"draft" | "published">("draft");
+  const [publishSlugError, setPublishSlugError] = React.useState<string | null>(
+    null,
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPublishSlugError(null);
+    const slugTrimmed = externalSlug.trim();
+    if (status === "published" && !slugTrimmed) {
+      setPublishSlugError(
+        "Published jobs need a public slug so candidates can open the careers page.",
+      );
+      return;
+    }
     const payload: CreateJobInput = {
       title: title.trim(),
       pipelineId,
       workplaceType,
+      status,
     };
     const s = summary.trim();
     if (s) payload.summary = s;
-    const slug = externalSlug.trim();
-    if (slug) payload.externalSlug = slug;
+    if (slugTrimmed) payload.externalSlug = slugTrimmed;
     const ll = locationLabel.trim();
     if (ll) payload.locationLabel = ll;
     const et = employmentType.trim();
@@ -164,6 +177,25 @@ export function JobCreateForm({
       </div>
 
       <div className="space-y-2">
+        <label htmlFor="job-status" className="text-sm font-medium">
+          Listing status
+        </label>
+        <select
+          id="job-status"
+          value={status}
+          onChange={(e) =>
+            setStatus(e.target.value === "published" ? "published" : "draft")
+          }
+          className={cn(
+            "h-8 w-full max-w-xs rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30",
+          )}
+        >
+          <option value="draft">Draft (internal only)</option>
+          <option value="published">Published (careers page)</option>
+        </select>
+      </div>
+
+      <div className="space-y-2">
         <label htmlFor="job-slug" className="text-sm font-medium">
           Public slug
         </label>
@@ -177,10 +209,17 @@ export function JobCreateForm({
           aria-invalid={createJob.isError ? true : undefined}
         />
         <p className="text-xs text-muted-foreground">
-          Globally unique URL segment. Only lowercase letters, numbers, and
-          hyphens.
+          Required for published jobs. Globally unique segment for{" "}
+          <code className="rounded bg-muted px-1">/o/…/careers/…</code>. Only
+          lowercase letters, numbers, and hyphens.
         </p>
       </div>
+
+      {publishSlugError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {publishSlugError}
+        </p>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
@@ -199,11 +238,11 @@ export function JobCreateForm({
           <label htmlFor="job-location" className="text-sm font-medium">
             Location
           </label>
-          <Input
+          <GooglePlacesLocationInput
             id="job-location"
             value={locationLabel}
-            onChange={(e) => setLocationLabel(e.target.value)}
-            placeholder="San Francisco Bay Area"
+            onValueChange={setLocationLabel}
+            placeholder="Start typing an address or city"
             maxLength={300}
           />
         </div>

@@ -1,13 +1,14 @@
-import { desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { job, organization, pipeline } from "@/db/schema";
 import { db } from "@/lib/db";
-import type { JobListRow } from "@/models/job/types";
+import type { JobDetail } from "@/models/job/types";
 
-export async function loadJobsForDashboard(
+export async function loadJobForDashboard(
   organizationId: string,
-): Promise<JobListRow[]> {
-  const rows = await db
+  jobId: string,
+): Promise<JobDetail | null> {
+  const [row] = await db
     .select({
       id: job.id,
       title: job.title,
@@ -18,14 +19,20 @@ export async function loadJobsForDashboard(
       isDefault: job.isDefault,
       externalSlug: job.externalSlug,
       updatedAt: job.updatedAt,
+      summary: job.summary,
+      salaryMin: job.salaryMin,
+      salaryMax: job.salaryMax,
+      salaryCurrency: job.salaryCurrency,
+      payPeriod: job.payPeriod,
+      publishedAt: job.publishedAt,
       pipelineName: pipeline.name,
       organizationSlug: organization.slug,
     })
     .from(job)
     .innerJoin(pipeline, eq(pipeline.id, job.pipelineId))
     .innerJoin(organization, eq(organization.id, job.organizationId))
-    .where(eq(job.organizationId, organizationId))
-    .orderBy(desc(job.updatedAt));
+    .where(and(eq(job.id, jobId), eq(job.organizationId, organizationId)))
+    .limit(1);
 
-  return rows;
+  return row ?? null;
 }

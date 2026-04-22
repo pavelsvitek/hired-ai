@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 
 import { DashboardShell } from "@/components/dashboard-shell";
 import { JobsPageContent } from "@/components/jobs-page-content";
@@ -11,7 +12,10 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { requireUserAndOrg } from "@/lib/dashboard-org";
+import {
+  publicOriginFromHeaders,
+  requireUserAndOrg,
+} from "@/lib/dashboard-org";
 import { loadJobsForDashboard } from "@/lib/recruiting/load-jobs-dashboard";
 
 export default async function JobsPage() {
@@ -21,6 +25,9 @@ export default async function JobsPage() {
     organizationId != null
       ? await loadJobsForDashboard(organizationId)
       : [];
+
+  const hdrs = await headers();
+  const origin = publicOriginFromHeaders(hdrs);
 
   return (
     <DashboardShell
@@ -47,7 +54,11 @@ export default async function JobsPage() {
       }
     >
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <JobsPageContent organizationId={organizationId} jobs={jobs} />
+        <JobsPageContent
+          organizationId={organizationId}
+          jobs={jobs}
+          origin={origin}
+        />
       </div>
     </DashboardShell>
   );

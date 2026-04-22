@@ -23,6 +23,16 @@ export type BulkUploadCvsResult = {
   failures: { fileName: string; message: string }[];
 };
 
+function invalidateCandidateOrgLists(
+  queryClient: ReturnType<typeof useQueryClient>,
+  organizationId: string | null,
+) {
+  if (organizationId == null || organizationId.length === 0) return;
+  void queryClient.invalidateQueries({
+    queryKey: [...candidateKeys.all, "list", organizationId],
+  });
+}
+
 async function postUploadCv(
   organizationId: string,
   file: File,
@@ -102,9 +112,7 @@ export function useBulkUploadCandidatesMutation(organizationId: string | null) {
       return bulkUploadCvs(organizationId, files, onProgress);
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({
-        queryKey: candidateKeys.list(organizationId),
-      });
+      invalidateCandidateOrgLists(queryClient, organizationId);
     },
   });
 }
@@ -120,9 +128,7 @@ export function useUploadCandidateMutation(organizationId: string | null) {
       return postUploadCv(organizationId, file);
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: candidateKeys.list(organizationId),
-      });
+      invalidateCandidateOrgLists(queryClient, organizationId);
     },
   });
 }
@@ -155,9 +161,7 @@ export function useReparseCandidateMutation(organizationId: string | null) {
     mutationFn: ({ candidateId }: { candidateId: string }) =>
       postReparseCv(candidateId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: candidateKeys.list(organizationId),
-      });
+      invalidateCandidateOrgLists(queryClient, organizationId);
     },
   });
 }
@@ -165,6 +169,7 @@ export function useReparseCandidateMutation(organizationId: string | null) {
 async function patchCandidateStage(
   candidateId: string,
   pipelineStageId: string,
+  jobId: string,
 ): Promise<{ ok: true }> {
   const res = await fetch(
     `/api/candidates/${candidateId}/application/stage`,
@@ -172,7 +177,7 @@ async function patchCandidateStage(
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ pipelineStageId }),
+      body: JSON.stringify({ pipelineStageId, jobId }),
     },
   );
   const data: unknown = await res.json().catch(() => ({}));
@@ -202,30 +207,36 @@ type UpdateStageCtx = { previous: CandidateListRow[] | undefined };
 
 export function useUpdateCandidateStageMutation(
   organizationId: string | null,
+  jobId: string | null,
 ) {
   const queryClient = useQueryClient();
-  const listKey = candidateKeys.list(organizationId);
+  const listKey = candidateKeys.list(organizationId, jobId);
 
   return useMutation<{ ok: true }, Error, UpdateStageVars, UpdateStageCtx>({
     mutationFn: async ({ candidateId, pipelineStageId }) => {
+      if (jobId == null || jobId.length === 0) {
+        throw new Error("No job selected.");
+      }
       const [, result] = await Promise.all([
         createDelay(UPDATE_CANDIDATE_STAGE_MIN_DURATION_MS),
-        patchCandidateStage(candidateId, pipelineStageId),
+        patchCandidateStage(candidateId, pipelineStageId, jobId),
       ]);
       return result;
     },
     onMutate: async (variables) => {
-      if (organizationId == null || organizationId.length === 0) {
+      if (
+        organizationId == null ||
+        organizationId.length === 0 ||
+        jobId == null ||
+        jobId.length === 0
+      ) {
         return { previous: undefined };
       }
-      // Snapshot before any await so we can roll back
       const previous = queryClient.getQueryData<CandidateListRow[]>(listKey);
       const targetRow = previous?.find((r) => r.id === variables.candidateId);
       const newStage = targetRow?.recruitment.stages.find(
         (s) => s.id === variables.pipelineStageId,
       );
-      // Apply optimistic update synchronously (no await before this) so the
-      // cache reflects the new stage before the DragOverlay unmounts.
       if (previous != null && targetRow != null && newStage != null) {
         queryClient.setQueryData<CandidateListRow[]>(listKey, (current) => {
           const base = current ?? previous;
@@ -239,7 +250,6 @@ export function useUpdateCandidateStageMutation(
           );
         });
       }
-      // Cancel in-flight list fetches after the update to avoid overwriting it
       await queryClient.cancelQueries({ queryKey: listKey });
       return { previous };
     },
