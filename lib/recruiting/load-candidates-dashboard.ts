@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import {
   candidate,
@@ -7,14 +7,23 @@ import {
   pipelineStage,
 } from "@/db/schema";
 import { backfillMissingApplicationsForOrg } from "@/lib/recruiting/backfill-applications";
+import { loadPipelineStagesForPipelineId } from "@/lib/recruiting/load-job-stages";
 import type { CandidateListRow } from "@/models/candidate/types";
 import { db } from "@/lib/db";
+
+export type LoadCandidatesForDashboardOptions = {
+  /** When true, skip the org backfill write (e.g. MCP read tools). */
+  skipBackfill?: boolean;
+};
 
 export async function loadCandidatesForDashboard(
   organizationId: string,
   jobId: string,
+  options?: LoadCandidatesForDashboardOptions,
 ): Promise<CandidateListRow[]> {
-  await backfillMissingApplicationsForOrg(organizationId);
+  if (!options?.skipBackfill) {
+    await backfillMissingApplicationsForOrg(organizationId);
+  }
 
   const [jobRow] = await db
     .select({
@@ -30,21 +39,7 @@ export async function loadCandidatesForDashboard(
     return [];
   }
 
-  const stages = await db
-    .select({
-      id: pipelineStage.id,
-      name: pipelineStage.name,
-      sortOrder: pipelineStage.sortOrder,
-    })
-    .from(pipelineStage)
-    .where(eq(pipelineStage.pipelineId, jobRow.pipelineId))
-    .orderBy(asc(pipelineStage.sortOrder));
-
-  const stageBriefs = stages.map((s) => ({
-    id: s.id,
-    name: s.name,
-    sortOrder: s.sortOrder,
-  }));
+  const stageBriefs = await loadPipelineStagesForPipelineId(jobRow.pipelineId);
 
   const rows = await db
     .select({
