@@ -4,13 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { handle } from "hono/vercel";
 import { z } from "zod";
 
-import {
-  candidate,
-  candidateApplication,
-  job,
-  member,
-  pipelineStage,
-} from "@/db/schema";
+import { candidate, member } from "@/db/schema";
 import { extractCvFromPdf } from "@/lib/cv-extraction/extract";
 import {
   mapExtractionToCandidateInsert,
@@ -29,6 +23,7 @@ import {
 } from "@/lib/recruiting/get-default-job-id-for-org";
 import { ensureDefaultApplicationForCandidate } from "@/lib/recruiting/ensure-defaults";
 import { loadCandidatesForDashboard } from "@/lib/recruiting/load-candidates-dashboard";
+import { moveApplicationToStage } from "@/lib/recruiting/move-application-stage";
 import type { CandidatesListResponse } from "@/models/candidate/types";
 
 export const runtime = "nodejs";
@@ -210,58 +205,25 @@ app.patch(
       return c.json({ error: "Candidate not found" }, 404);
     }
 
-    const [jobRow] = await db
-      .select({
-        id: job.id,
-        pipelineId: job.pipelineId,
-      })
-      .from(job)
-      .where(
-        and(
-          eq(job.id, jobIdBody),
-          eq(job.organizationId, cand.organizationId),
-        ),
-      )
-      .limit(1);
+    const result = await moveApplicationToStage({
+      organizationId: cand.organizationId,
+      candidateId,
+      jobId: jobIdBody,
+      pipelineStageId,
+    });
 
-    if (!jobRow) {
-      return c.json({ error: "Job not found" }, 404);
-    }
-
-    const [stageRow] = await db
-      .select({ id: pipelineStage.id })
-      .from(pipelineStage)
-      .where(
-        and(
-          eq(pipelineStage.id, pipelineStageId),
-          eq(pipelineStage.pipelineId, jobRow.pipelineId),
-        ),
-      )
-      .limit(1);
-
-    if (!stageRow) {
-      return c.json(
-        { error: "Stage is not part of this job's pipeline" },
-        400,
-      );
-    }
-
-    const [updated] = await db
-      .update(candidateApplication)
-      .set({
-        pipelineStageId,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(candidateApplication.candidateId, candidateId),
-          eq(candidateApplication.jobId, jobIdBody),
-        ),
-      )
-      .returning({ id: candidateApplication.id });
-
-    if (!updated) {
-      return c.json({ error: "Application not found" }, 404);
+    if (!result.ok) {
+      const status =
+        result.code === "invalid_stage"
+          ? 400
+          : result.code === "candidate_not_found" ||
+              result.code === "job_not_found" ||
+              result.code === "application_not_found"
+            ? 404
+            : result.code === "wrong_organization"
+              ? 404
+              : 400;
+      return c.json({ error: result.message }, status);
     }
 
     return c.json({ ok: true as const });
